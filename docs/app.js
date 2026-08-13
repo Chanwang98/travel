@@ -115,14 +115,16 @@ function moveItem(id,direction){ const from=plan.items.findIndex(item=>item.id==
 
 function selectedTimeMode(){ return document.querySelector('input[name="timeMode"]:checked').value }
 function previousForItem(id){ const index=plan.items.findIndex(x=>x.id===id); return index>0?plan.items[index-1]:index<0?plan.items.at(-1):null }
-function updateTimeForm(){
+function updateTimeForm(finalize=false){
   const previous=previousForItem($("itemId").value),linked=$("linkedPrevious").checked,mode=selectedTimeMode();
   $("linkedPrevious").disabled=!previous; if(!previous)$("linkedPrevious").checked=false;
   $("linkHint").textContent=previous?`开始时间将使用上一行程结束时间 ${previous.endTime}`:"当前没有可衔接的上一行程";
   $("startTime").readOnly=Boolean(previous&&linked); if(previous&&linked)$("startTime").value=previous.endTime;
   $("durationMinutes").disabled=mode==="fixedEnd"; $("durationMinutes").required=mode==="duration"; $("endTime").readOnly=mode==="duration";
   if(mode==="duration"){
-    const duration=Math.max(1,Number($("durationMinutes").value)||60); $("durationMinutes").value=duration; $("endTime").value=minutesToTime(timeToMinutes($("startTime").value)+duration);
+    const raw=$("durationMinutes").value.trim();
+    if(!raw&&!finalize){ $("durationOutput").textContent="等待输入"; return }
+    const duration=Math.max(1,Number(raw)||60); if(finalize)$("durationMinutes").value=duration; $("endTime").value=minutesToTime(timeToMinutes($("startTime").value)+duration);
   }else $("durationMinutes").value=durationBetween($("startTime").value,$("endTime").value);
   $("durationOutput").textContent=formatDuration($("durationMinutes").value);
 }
@@ -143,7 +145,7 @@ function openItem(id){
   $("modalTitle").textContent=id?"编辑行程":"新增行程"; $("itemId").value=item.id; $("itemDate").value=toDateInputValue(item.date); updateWeekday(); $("linkedPrevious").checked=item.linkedPrevious; $("startTime").value=item.startTime; $("endTime").value=item.endTime; document.querySelector(`input[name="timeMode"][value="${item.timeMode}"]`).checked=true; $("durationMinutes").value=item.durationMinutes; $("itemTitle").value=item.title; toggleTitleMenu(false); $("location").value=item.location; $("transport").value=item.transport; $("details").value=item.details; $("note").value=item.note; $("deleteBtn").style.visibility=id?"visible":"hidden"; updateTimeForm(); $("itemDialog").showModal(); $("itemDialog").scrollTop=0;
 }
 function saveItem(event){
-  event.preventDefault(); updateTimeForm(); const item={id:$("itemId").value,date:formatDateWithWeekday($("itemDate").value),startTime:$("startTime").value,endTime:$("endTime").value,linkedPrevious:$("linkedPrevious").checked,timeMode:selectedTimeMode(),durationMinutes:Math.max(1,Number($("durationMinutes").value)||1),title:$("itemTitle").value.trim(),location:$("location").value.trim(),transport:$("transport").value,details:$("details").value.trim(),note:$("note").value.trim()}; const index=plan.items.findIndex(x=>x.id===item.id); if(index>=0)plan.items[index]=item;else plan.items.push(item); recalculateSchedule(index>=0?index:plan.items.length-1); $("itemDialog").close();render();markChanged();
+  event.preventDefault(); updateTimeForm(true); const item={id:$("itemId").value,date:formatDateWithWeekday($("itemDate").value),startTime:$("startTime").value,endTime:$("endTime").value,linkedPrevious:$("linkedPrevious").checked,timeMode:selectedTimeMode(),durationMinutes:Math.max(1,Number($("durationMinutes").value)||60),title:$("itemTitle").value.trim(),location:$("location").value.trim(),transport:$("transport").value,details:$("details").value.trim(),note:$("note").value.trim()}; const index=plan.items.findIndex(x=>x.id===item.id); if(index>=0)plan.items[index]=item;else plan.items.push(item); recalculateSchedule(index>=0?index:plan.items.length-1); $("itemDialog").close();render();markChanged();
 }
 
 async function saveToGithub(options={}){
@@ -166,8 +168,9 @@ transports.forEach(value=>$("transport").add(new Option(value,value)));
 fields.forEach(id=>$(id).addEventListener("input",()=>{collectMeta();markChanged()}));
 $("addBtn").onclick=$("addRowBtn").onclick=()=>openItem(); $("itemForm").onsubmit=saveItem; $("saveBtn").onclick=saveToGithub; $("pdfBtn").onclick=()=>window.print(); $("wordBtn").onclick=exportWord;
 $("itemDate").addEventListener("change",updateWeekday);
-["linkedPrevious","startTime","endTime","durationMinutes"].forEach(id=>$(id).addEventListener("input",updateTimeForm));
-document.querySelectorAll('input[name="timeMode"]').forEach(input=>input.addEventListener("change",updateTimeForm));
+["linkedPrevious","startTime","endTime","durationMinutes"].forEach(id=>$(id).addEventListener("input",()=>updateTimeForm(false)));
+$("durationMinutes").addEventListener("blur",()=>updateTimeForm(true));
+document.querySelectorAll('input[name="timeMode"]').forEach(input=>input.addEventListener("change",()=>updateTimeForm(true)));
 $("titleMenuBtn").onclick=()=>toggleTitleMenu();
 $("itemTitle").addEventListener("input",()=>{if(!$("titleMenu").hidden)renderTitleSuggestions()});
 $("titleMenu").addEventListener("click",event=>{const button=event.target.closest("[data-title]");if(!button)return;$("itemTitle").value=button.dataset.title;toggleTitleMenu(false);$("itemTitle").focus()});
