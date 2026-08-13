@@ -171,6 +171,20 @@
       "transport": "步行",
       "details": "",
       "note": ""
+    },
+    {
+      "id": "item-1786623358740",
+      "date": "2026年8月15日 · 周六",
+      "startTime": "21:00",
+      "endTime": "22:30",
+      "linkedPrevious": true,
+      "timeMode": "duration",
+      "durationMinutes": 90,
+      "title": "酒吧",
+      "location": "夫子庙——The Rebirth Bar",
+      "transport": "打车",
+      "details": "",
+      "note": ""
     }
   ]
 }
