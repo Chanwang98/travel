@@ -35,9 +35,9 @@
     {
       "id": "item-1786615574090",
       "date": "2026年8月15日 · 周六",
-      "startTime": "11:47",
-      "endTime": "11:57",
-      "linkedPrevious": false,
+      "startTime": "11:48",
+      "endTime": "11:58",
+      "linkedPrevious": true,
       "timeMode": "duration",
       "durationMinutes": 10,
       "title": "交通出行",
