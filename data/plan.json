@@ -73,6 +73,20 @@
       "transport": "打车",
       "details": "",
       "note": ""
+    },
+    {
+      "id": "item-1786622709608",
+      "date": "2026年8月15日 · 周六",
+      "startTime": "12:57",
+      "endTime": "13:27",
+      "linkedPrevious": true,
+      "timeMode": "duration",
+      "durationMinutes": 30,
+      "title": "午餐",
+      "location": "李记清真馆(打钉巷店)",
+      "transport": "步行",
+      "details": "",
+      "note": ""
     }
   ]
 }
