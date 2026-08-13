@@ -96,9 +96,23 @@
       "linkedPrevious": true,
       "timeMode": "duration",
       "durationMinutes": 25,
-      "title": "交通出行",
+      "title": "前往景点",
       "location": "李记清真馆(打钉巷店)——老东门",
       "transport": "骑行",
+      "details": "",
+      "note": ""
+    },
+    {
+      "id": "item-1786622858657",
+      "date": "2026年8月15日 · 周六",
+      "startTime": "13:52",
+      "endTime": "16:30",
+      "linkedPrevious": true,
+      "timeMode": "fixedEnd",
+      "durationMinutes": 158,
+      "title": "景点游览",
+      "location": "老东门",
+      "transport": "步行",
       "details": "",
       "note": ""
     }
