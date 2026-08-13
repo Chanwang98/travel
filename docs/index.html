@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f8ff">
+  <title>旅迹 · Travel Planner</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="#top"><span class="brand-mark">旅</span><span>旅迹</span></a>
+    <div class="actions">
+      <span id="syncStatus" class="sync"><i></i>读取中…</span>
+      <button class="button ghost" id="settingsBtn">同步设置</button>
+      <button class="button ghost" id="pdfBtn">导出 PDF</button>
+      <button class="button ghost" id="wordBtn">导出 Word</button>
+      <button class="button primary" id="addBtn">＋ 新增行程</button>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="hero">
+      <p class="eyebrow">MY JOURNEY</p>
+      <input id="planTitle" class="title-input" aria-label="旅行标题">
+      <p class="hero-copy">把期待写进行程，让每一次出发都从容而清晰。</p>
+      <div class="trip-meta">
+        <label><span>目的地</span><input id="destination"></label><b></b>
+        <label><span>日期</span><input id="dateRange"></label><b></b>
+        <label><span>同行</span><input id="companions"></label>
+      </div>
+    </section>
+
+    <section class="planner">
+      <div class="section-heading"><div><p class="eyebrow">ITINERARY</p><h2>行程安排</h2></div><p>拖动卡片调整顺序 · 修改后点击保存</p></div>
+      <div id="timeline"></div>
+      <button class="add-row" id="addRowBtn">＋ 添加下一段行程</button>
+      <div class="save-panel"><p>数据公开存储于 <a href="https://github.com/Chanwang98/travel/blob/main/data/plan.json" target="_blank" rel="noreferrer">GitHub 仓库</a></p><button class="button primary large" id="saveBtn">保存并同步到 GitHub</button></div>
+    </section>
+  </main>
+
+  <footer><span class="brand-mark small">旅</span><p>把旅途，留在美好的秩序里。</p></footer>
+
+  <dialog id="itemDialog">
+    <form id="itemForm">
+      <div class="modal-heading"><div><p class="eyebrow">TRIP STOP</p><h2 id="modalTitle">新增行程</h2></div><button type="button" class="close" data-close="itemDialog">×</button></div>
+      <input type="hidden" id="itemId">
+      <div class="form-grid">
+        <label class="wide"><span>日期</span><input id="itemDate" required placeholder="8月16日 · 周日"></label>
+        <label><span>开始时间</span><input id="startTime" type="time" required></label>
+        <label><span>结束时间</span><input id="endTime" type="time" required></label>
+        <label class="wide"><span>行程名称</span><input id="itemTitle" required placeholder="例如：办理入住"></label>
+        <label class="wide"><span>地点 / 路线</span><input id="location" placeholder="出发地 → 目的地，或景点地址"></label>
+        <label><span>交通方式</span><select id="transport"></select></label>
+        <label><span>交通详情</span><input id="details" placeholder="车次、座位、地铁线、费用"></label>
+        <label class="wide"><span>行程备注</span><textarea id="note" rows="3" placeholder="入口/出口、集合点、预订信息、注意事项……"></textarea></label>
+      </div>
+      <div class="modal-actions"><button type="button" class="delete" id="deleteBtn">删除行程</button><span></span><button type="button" class="button ghost" data-close="itemDialog">取消</button><button type="submit" class="button primary">保存行程</button></div>
+    </form>
+  </dialog>
+
+  <dialog id="settingsDialog">
+    <form id="settingsForm">
+      <div class="modal-heading"><div><p class="eyebrow">GITHUB SYNC</p><h2>同步设置</h2></div><button type="button" class="close" data-close="settingsDialog">×</button></div>
+      <div class="privacy-note"><strong>令牌只保存在当前浏览器</strong><p>请创建仅限 <code>Chanwang98/travel</code> 仓库、仅授予 Contents: Read and write 的 fine-grained token。不要把令牌发送给任何人，也不要提交进代码。</p></div>
+      <label class="token-label"><span>Fine-grained token</span><input id="tokenInput" type="password" autocomplete="off" placeholder="github_pat_…"></label>
+      <div class="modal-actions"><button type="button" class="delete" id="clearTokenBtn">清除本机令牌</button><span></span><a class="button ghost link-button" href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noreferrer">创建令牌</a><button type="submit" class="button primary">保存在本机</button></div>
+    </form>
+  </dialog>
+
+  <div id="toast" role="status"></div>
+  <script src="./app.js"></script>
+</body>
+</html>

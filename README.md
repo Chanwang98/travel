@@ -2,9 +2,9 @@
 
 一款 Apple 风格的个人旅行规划工具，用清晰的时间轴整理每一段旅程。
 
-## 在线体验
+## GitHub Pages
 
-https://travel-planner-chan.giving-cod-3613.chatgpt.site
+https://chanwang98.github.io/travel/
 
 ## 功能
 
@@ -16,6 +16,10 @@ https://travel-planner-chan.giving-cod-3613.chatgpt.site
 - Cloudflare D1 持久化保存
 - 导出 PDF 与 Word
 - 桌面端与移动端响应式布局
+
+## 数据同步
+
+行程公开存储在 `data/plan.json`。网页读取无需登录；写入时需在“同步设置”中配置一个仅限本仓库、仅拥有 Contents 读写权限的 fine-grained GitHub token。令牌只保存在当前设备浏览器中，不会上传到仓库。
 
 ## 本地开发
 
