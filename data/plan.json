@@ -22,15 +22,15 @@
       "id": "item-1786615574090",
       "date": "2026年8月15日 · 周六",
       "startTime": "11:47",
-      "endTime": "12:20",
-      "title": "交通出行",
-      "location": "南京南—酒店",
-      "transport": "地铁",
-      "details": "3 号线",
-      "note": "",
+      "endTime": "11:57",
       "linkedPrevious": false,
       "timeMode": "duration",
-      "durationMinutes": 33
+      "durationMinutes": 10,
+      "title": "交通出行",
+      "location": "南京南—酒店",
+      "transport": "打车",
+      "details": "",
+      "note": ""
     }
   ]
 }
