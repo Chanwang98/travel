@@ -23,7 +23,7 @@ function isPlan(value: unknown): value is Record<string, unknown> {
 export async function GET() {
   try {
     const owner = await getOwner();
-    const db = getDb();
+    const db = await getDb();
     const [record] = await db
       .select()
       .from(travelPlans)
@@ -49,7 +49,7 @@ export async function PUT(request: Request) {
       return Response.json({ error: "行程内容过大" }, { status: 413 });
     }
     const owner = await getOwner();
-    const db = getDb();
+    const db = await getDb();
     const updatedAt = new Date();
     await db
       .insert(travelPlans)
