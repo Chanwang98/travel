@@ -213,6 +213,34 @@
       "transport": "打车",
       "details": "",
       "note": ""
+    },
+    {
+      "id": "item-1786623608669",
+      "date": "2026年8月16日 · 周日",
+      "startTime": "00:30",
+      "endTime": "09:00",
+      "linkedPrevious": true,
+      "timeMode": "fixedEnd",
+      "durationMinutes": 510,
+      "title": "酒店休息",
+      "location": "",
+      "transport": "步行",
+      "details": "",
+      "note": ""
+    },
+    {
+      "id": "item-1786623636866",
+      "date": "2026年8月16日 · 周日",
+      "startTime": "09:00",
+      "endTime": "09:45",
+      "linkedPrevious": true,
+      "timeMode": "duration",
+      "durationMinutes": 45,
+      "title": "酒店早餐",
+      "location": "南京南站诺富特酒店",
+      "transport": "步行",
+      "details": "",
+      "note": ""
     }
   ]
 }
