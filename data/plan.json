@@ -252,7 +252,7 @@
       "durationMinutes": 75,
       "title": "酒店早餐 + 酒店退房",
       "location": "南京南站诺富特酒店",
-      "transport": "步行",
+      "transport": "早餐",
       "details": "",
       "note": ""
     },
@@ -308,7 +308,7 @@
       "durationMinutes": 60,
       "title": "午餐",
       "location": "小潘记鸭血粉丝汤",
-      "transport": "步行",
+      "transport": "午餐",
       "details": "",
       "note": ""
     },
