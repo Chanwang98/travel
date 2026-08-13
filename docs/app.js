@@ -3,6 +3,8 @@ const FILE_PATH = "data/plans.json";
 const LEGACY_FILE_PATH = "data/plan.json";
 const API = `https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`;
 const LEGACY_API = `https://api.github.com/repos/${REPO}/contents/${LEGACY_FILE_PATH}`;
+const PUBLIC_DATA_URL = `https://raw.githubusercontent.com/${REPO}/main/${FILE_PATH}`;
+const PUBLIC_LEGACY_URL = `https://raw.githubusercontent.com/${REPO}/main/${LEGACY_FILE_PATH}`;
 const typeGroups = {
   "交通出行":["飞机","高铁","火车","地铁","公交","打车","自驾","骑行","步行","轮渡"],
   "餐饮休闲":["早餐","午餐","晚餐","下午茶","夜宵","咖啡","酒吧"],
@@ -133,14 +135,15 @@ function getItemStatus(item,now=new Date()){
 
 async function loadPlan(){
   try{
-    const response=await fetch(`${API}?ref=main&t=${Date.now()}`,{headers:headers(Boolean(token()))});
-    if(!response.ok)throw new Error(`GitHub 返回 ${response.status}`);
-    const result=await response.json(),loaded=JSON.parse(decodeBase64(result.content)); fileSha=result.sha; dirty=false;
+    const authenticated=Boolean(token());
+    const response=await fetch(authenticated?`${API}?ref=main&t=${Date.now()}`:`${PUBLIC_DATA_URL}?t=${Date.now()}`,authenticated?{headers:headers(true)}:{cache:"no-store"});
+    if(!response.ok)throw new Error(`GitHub 读取失败 ${response.status}`);
+    const result=await response.json(),loaded=authenticated?JSON.parse(decodeBase64(result.content)):result; fileSha=authenticated?result.sha:null; dirty=false;
     if(Array.isArray(loaded.plans)&&loaded.plans.length)planStore={version:1,plans:loaded.plans.map(normalizePlan)};
     else{
-      const legacyResponse=await fetch(`${LEGACY_API}?ref=main&t=${Date.now()}`,{headers:headers(Boolean(token()))});
+      const legacyResponse=await fetch(authenticated?`${LEGACY_API}?ref=main&t=${Date.now()}`:`${PUBLIC_LEGACY_URL}?t=${Date.now()}`,authenticated?{headers:headers(true)}:{cache:"no-store"});
       if(!legacyResponse.ok)throw new Error("无法读取原有行程");
-      const legacyResult=await legacyResponse.json(); planStore={version:1,plans:[normalizePlan(JSON.parse(decodeBase64(legacyResult.content)),0)]}; dirty=true;
+      const legacyResult=await legacyResponse.json(); planStore={version:1,plans:[normalizePlan(authenticated?JSON.parse(decodeBase64(legacyResult.content)):legacyResult,0)]}; dirty=true;
     }
     const preferred=localStorage.getItem("travelActivePlanId"); plan=planStore.plans.find(value=>value.id===preferred)||planStore.plans[0]; localStorage.setItem("travelActivePlanId",plan.id);
     render(); setStatus(dirty?(token()?"原有行程待迁移 · 30秒内同步":"原有行程待迁移 · 请设置同步"):"已与 GitHub 同步",dirty?"":"ok");
@@ -296,7 +299,7 @@ function exportWord(){ collectMeta(); const rows=plan.items.map(x=>`<tr><td>${es
 
 Object.entries(typeGroups).forEach(([label,values])=>{const group=document.createElement("optgroup");group.label=label;values.forEach(value=>group.append(new Option(value,value)));$("transport").append(group)});
 fields.forEach(id=>$(id).addEventListener("input",()=>{collectMeta();markChanged()}));
-$("addBtn").onclick=$("addRowBtn").onclick=()=>openItem(); $("itemForm").onsubmit=saveItem; $("saveBtn").onclick=saveToGithub; $("pdfBtn").onclick=()=>window.print(); $("wordBtn").onclick=exportWord;
+$("addBtn").onclick=$("addRowBtn").onclick=()=>openItem(); $("itemForm").onsubmit=saveItem; $("saveBtn").onclick=saveToGithub; $("wordBtn").onclick=exportWord;
 $("itemDate").addEventListener("change",updateWeekday);
 ["linkedPrevious","startTime","endTime","durationMinutes"].forEach(id=>$(id).addEventListener("input",()=>updateTimeForm(false)));
 $("durationMinutes").addEventListener("blur",()=>updateTimeForm(true));

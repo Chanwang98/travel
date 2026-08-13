@@ -55,7 +55,7 @@
   html,body{max-width:100%;overflow-x:hidden}
   .topbar{min-height:78px;padding:10px 14px;padding-top:max(10px,env(safe-area-inset-top));align-items:flex-start}
   .brand{height:38px;font-size:16px}.brand-mark{width:30px;height:30px;border-radius:9px;font-size:13px}
-  .actions{width:calc(100% - 88px);min-width:0;gap:5px}.actions #settingsBtn{display:none}.actions .trips-button{display:inline-grid;height:38px;padding:0 11px;font-size:11px;white-space:nowrap}.actions .primary{min-width:104px;height:38px;padding:0 14px;font-size:12px;white-space:nowrap}
+  .actions{width:calc(100% - 88px);min-width:0;gap:5px}.actions #settingsBtn{display:none}.actions .trips-button,.actions .calendar-button{display:inline-grid;height:38px;padding:0 11px;font-size:11px;white-space:nowrap}.actions .calendar-button{color:#176fc4;background:#eaf4ff}.actions .primary{min-width:104px;height:38px;padding:0 14px;font-size:12px;white-space:nowrap}
   .sync{min-height:22px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .hero{min-height:320px;padding:52px 14px 40px}.eyebrow{margin-bottom:10px}.editable-title{max-width:100%}.editable-title .title-input{width:100%;font-size:clamp(34px,11vw,48px);line-height:1.12}
   .trip-meta{margin-top:30px;padding:13px 10px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;overflow:visible;border-radius:16px}
