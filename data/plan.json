@@ -16,7 +16,7 @@
       "location": "上海虹桥—南京南",
       "transport": "高铁",
       "details": "G676",
-      "note": ""
+      "note": "【16A16B检票口】"
     },
     {
       "id": "item-1786620512671",
@@ -339,6 +339,20 @@
       "transport": "打车",
       "details": "",
       "note": ""
+    },
+    {
+      "id": "item-1786624201953",
+      "date": "2026年8月16日 · 周日",
+      "startTime": "16:53",
+      "endTime": "18:21",
+      "linkedPrevious": false,
+      "timeMode": "fixedEnd",
+      "durationMinutes": 88,
+      "title": "返程",
+      "location": "南京南站——上海虹桥站",
+      "transport": "高铁",
+      "details": "G745",
+      "note": "【B4检票口】"
     }
   ]
 }
