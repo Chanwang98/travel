@@ -71,7 +71,7 @@ function setStatus(text,type=""){ $("syncStatus").className=`sync ${type}`; $("s
 function toast(text){ const node=$("toast"); node.textContent=text; node.classList.add("show"); setTimeout(()=>node.classList.remove("show"),2400) }
 function markChanged(){ dirty=true; setStatus(token()?"有修改 · 30秒内自动同步":"有修改 · 请设置同步") }
 function newPlanId(){ return `trip-${Date.now()}-${Math.random().toString(36).slice(2,7)}` }
-function normalizePlan(value,index=0){ return {id:value.id||`trip-migrated-${index+1}`,createdAt:value.createdAt||new Date().toISOString(),updatedAt:value.updatedAt||new Date().toISOString(),title:value.title||"未命名旅行",destination:value.destination||"",dateRange:value.dateRange||"",companions:value.companions||"",items:(value.items||[]).map(normalizedItem)} }
+function normalizePlan(value,index=0){ return {id:value.id||`trip-migrated-${index+1}`,createdAt:value.createdAt||new Date().toISOString(),updatedAt:value.updatedAt||new Date().toISOString(),timezone:value.timezone||"Asia/Shanghai",title:value.title||"未命名旅行",destination:value.destination||"",dateRange:value.dateRange||"",companions:value.companions||"",items:(value.items||[]).map(normalizedItem)} }
 
 function parseItemDate(dateText, now=new Date()){
   const normalized=String(dateText||"").trim();
@@ -231,19 +231,66 @@ function saveItem(event){
   event.preventDefault(); updateTimeForm(true); const item={id:$("itemId").value,date:formatDateWithWeekday($("itemDate").value),startTime:$("startTime").value,endTime:$("endTime").value,linkedPrevious:$("linkedPrevious").checked,timeMode:selectedTimeMode(),durationMinutes:Math.max(1,Number($("durationMinutes").value)||60),title:$("itemTitle").value.trim(),location:$("location").value.trim(),transport:$("transport").value,details:$("details").value.trim(),note:$("note").value.trim()}; const index=plan.items.findIndex(x=>x.id===item.id); if(index>=0)plan.items[index]=item;else plan.items.push(item); recalculateSchedule(index>=0?index:plan.items.length-1); $("itemDialog").close();render();markChanged();
 }
 
+function calendarUrl(value=plan){ return `https://chanwang98.github.io/travel/calendars/${encodeURIComponent(value.id)}.ics` }
+function icsEscape(value=""){ return String(value).replace(/\\/g,"\\\\").replace(/;/g,"\\;").replace(/,/g,"\\,").replace(/\r?\n/g,"\\n") }
+function foldIcsLine(line){
+  const encoder=new TextEncoder(); let output="",chunk="";
+  for(const character of line){ if(encoder.encode(chunk+character).length>74){output+=`${chunk}\r\n `;chunk=character}else chunk+=character }
+  return output+chunk;
+}
+function calendarDateTime(item,time,end=false){
+  const parts=parseItemDate(item.date); if(!parts||!/^\d{2}:\d{2}$/.test(time||""))return "";
+  const [hours,minutes]=time.split(":").map(Number),date=new Date(parts.year,parts.month-1,parts.day);
+  if(end&&timeToMinutes(time)<=timeToMinutes(item.startTime))date.setDate(date.getDate()+1);
+  return `${date.getFullYear()}${String(date.getMonth()+1).padStart(2,"0")}${String(date.getDate()).padStart(2,"0")}T${String(hours).padStart(2,"0")}${String(minutes).padStart(2,"0")}00`;
+}
+function utcIcsDate(value=new Date().toISOString()){ return new Date(value).toISOString().replace(/[-:]/g,"").replace(/\.\d{3}/,"") }
+function generateCalendar(value=plan){
+  const timezone=value.timezone||"Asia/Shanghai",stamp=utcIcsDate(),sequence=Math.max(0,Math.floor(Date.parse(value.updatedAt||Date.now())/1000));
+  const lines=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Travel Planner//Subscribed Calendar//ZH-CN","CALSCALE:GREGORIAN","METHOD:PUBLISH",`X-WR-CALNAME:${icsEscape(value.title)}`,`X-WR-TIMEZONE:${timezone}`,"REFRESH-INTERVAL;VALUE=DURATION:PT1H","X-PUBLISHED-TTL:PT1H"];
+  value.items.forEach(item=>{
+    const start=calendarDateTime(item,item.startTime),end=calendarDateTime(item,item.endTime,true); if(!start||!end)return;
+    const description=[item.transport?`类型：${item.transport}`:"",item.details?`详情：${item.details}`:"",item.note?`备注：${item.note}`:""].filter(Boolean).join("\n");
+    lines.push("BEGIN:VEVENT",`UID:${icsEscape(item.id)}@travel.chanwang98.github.io`,`DTSTAMP:${stamp}`,`LAST-MODIFIED:${utcIcsDate(value.updatedAt)}`,`SEQUENCE:${sequence}`,`DTSTART;TZID=${timezone}:${start}`,`DTEND;TZID=${timezone}:${end}`,`SUMMARY:${icsEscape(item.title||"未命名行程")}`,`LOCATION:${icsEscape(item.location||value.destination||"")}`,`DESCRIPTION:${icsEscape(description)}`,"STATUS:CONFIRMED","END:VEVENT");
+  });
+  lines.push("END:VCALENDAR"); return `${lines.map(foldIcsLine).join("\r\n")}\r\n`;
+}
+async function saveCalendarFile(value=plan){
+  const path=`docs/calendars/${value.id}.ics`,api=`https://api.github.com/repos/${REPO}/contents/${path}`;
+  const current=await fetch(`${api}?ref=main&t=${Date.now()}`,{headers:headers(true)}); let sha;
+  if(current.ok)sha=(await current.json()).sha; else if(current.status!==404)throw new Error(`读取订阅源失败 ${current.status}`);
+  const response=await fetch(api,{method:"PUT",headers:{...headers(true),"Content-Type":"application/json"},body:JSON.stringify({message:`Update calendar for ${value.title}`,content:encodeBase64(generateCalendar(value)),branch:"main",...(sha?{sha}:{})})});
+  const result=await response.json(); if(!response.ok)throw new Error(result.message||`日历发布失败 ${response.status}`); return true;
+}
+function showCalendarDialog(){
+  $("calendarPlanName").textContent=plan.title||"旅行日历"; $("calendarTimezone").value=plan.timezone||"Asia/Shanghai"; $("calendarUrl").value=calendarUrl(); $("openCalendarLink").href=calendarUrl().replace(/^https:/,"webcal:");
+  if(!$("calendarDialog").open)$("calendarDialog").showModal();
+}
+async function publishCalendar(options={}){
+  const fromDialog=Boolean(options.fromDialog); collectMeta();
+  if(!plan.items.some(item=>calendarDateTime(item,item.startTime)&&calendarDateTime(item,item.endTime,true))){toast("请先添加包含日期与时间的行程");return false}
+  if(!token()){setStatus("未同步 · 需要设置","error");$("settingsDialog").showModal();toast("请先设置 GitHub 令牌");return false}
+  if(fromDialog&&plan.timezone!==$("calendarTimezone").value){plan.timezone=$("calendarTimezone").value;markChanged()}
+  setStatus("正在发布订阅日历…"); $("refreshCalendarBtn").disabled=true;
+  try{
+    const success=dirty?await saveToGithub({calendar:true}):await saveCalendarFile(plan); if(!success)return false;
+    setStatus("日历订阅源已更新","ok");showCalendarDialog();toast("订阅日历已更新");return true;
+  }catch(error){setStatus("日历发布失败 · 点击重试","error");toast(error.message);return false}finally{$("refreshCalendarBtn").disabled=false}
+}
+
 async function saveToGithub(options={}){
   const automatic=Boolean(options.automatic); collectMeta();
-  if(saving||(!dirty&&automatic))return;
+  if(saving||(!dirty&&automatic))return false;
   if(!token()){
     setStatus("未同步 · 需要设置","error");
     if(!automatic){$("settingsDialog").showModal();toast("请先设置 GitHub 令牌")}
-    return;
+    return false;
   }
   saving=true; setStatus(automatic?"正在自动同步…":"正在提交到 GitHub…"); $("saveBtn").disabled=true;
   try{
     const response=await fetch(API,{method:"PUT",headers:{...headers(true),"Content-Type":"application/json"},body:JSON.stringify({message:`Update travel plans ${new Date().toLocaleString("zh-CN")}`,content:encodeBase64(JSON.stringify(planStore,null,2)),sha:fileSha,branch:"main"})});
-    const result=await response.json(); if(!response.ok)throw new Error(result.message||`保存失败 ${response.status}`); fileSha=result.content.sha;dirty=false;setStatus("已与 GitHub 同步","ok");if(!automatic)toast("所有设备均可读取最新行程");
-  }catch(error){setStatus("同步失败 · 点击重试","error");if(!automatic)toast(error.message)}finally{saving=false;$("saveBtn").disabled=false}
+    const result=await response.json(); if(!response.ok)throw new Error(result.message||`保存失败 ${response.status}`); fileSha=result.content.sha;await saveCalendarFile(plan);dirty=false;setStatus("已与 GitHub 同步 · 日历已更新","ok");if(!automatic&&!options.calendar)toast("所有设备与订阅日历均已更新");return true;
+  }catch(error){setStatus("同步失败 · 点击重试","error");if(!automatic)toast(error.message);return false}finally{saving=false;$("saveBtn").disabled=false}
 }
 function exportWord(){ collectMeta(); const rows=plan.items.map(x=>`<tr><td>${escapeHtml(x.date)}</td><td>${escapeHtml(x.startTime)}–${escapeHtml(x.endTime)}</td><td>${escapeHtml(x.title)}<br>${escapeHtml(x.location)}</td><td>${escapeHtml(x.transport)}<br>${escapeHtml(x.details)}</td><td>${escapeHtml(x.note)}</td></tr>`).join(""); const html=`<meta charset="utf-8"><h1>${escapeHtml(plan.title)}</h1><table border="1" cellpadding="8"><tr><th>日期</th><th>时间</th><th>行程</th><th>类型</th><th>备注</th></tr>${rows}</table>`;const url=URL.createObjectURL(new Blob(["\ufeff",html],{type:"application/msword"}));const a=document.createElement("a");a.href=url;a.download=`${plan.title}.doc`;a.click();URL.revokeObjectURL(url) }
 
@@ -264,6 +311,9 @@ $("plansBtn").onclick=()=>{renderPlanManager();$("plansDialog").showModal()};
 $("plansSettingsBtn").onclick=()=>{$("plansDialog").close();$("tokenInput").value=token();$("settingsDialog").showModal()};
 $("newPlanBtn").onclick=()=>{$("newPlanForm").reset();$("newPlanTitle").value="新的旅行";$("newPlanDialog").showModal();setTimeout(()=>$("newPlanTitle").select(),0)};
 $("newPlanForm").onsubmit=createPlan;
+$("calendarBtn").onclick=$("calendarPanelBtn").onclick=()=>publishCalendar();
+$("refreshCalendarBtn").onclick=()=>publishCalendar({fromDialog:true});
+$("copyCalendarUrl").onclick=async()=>{const value=$("calendarUrl").value;try{await navigator.clipboard.writeText(value)}catch{$("calendarUrl").select();document.execCommand("copy")}toast("订阅地址已复制")};
 $("syncStatus").onclick=()=>{if(dirty)saveToGithub()};
 $("settingsForm").onsubmit=e=>{e.preventDefault();localStorage.setItem("travelGithubToken",$("tokenInput").value.trim());$("settingsDialog").close();toast("令牌已保存在本机");loadPlan()};
 $("clearTokenBtn").onclick=()=>{localStorage.removeItem("travelGithubToken");$("tokenInput").value="";toast("本机令牌已清除")};

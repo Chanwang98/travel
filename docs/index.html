@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#f5f8ff">
   <title>旅迹 · Travel Planner</title>
-  <link rel="stylesheet" href="./styles.css?v=20260813-11">
+  <link rel="stylesheet" href="./styles.css?v=20260813-13">
 </head>
 <body>
   <header class="topbar">
@@ -16,6 +16,7 @@
       <button class="button ghost" id="settingsBtn">同步设置</button>
       <button class="button ghost" id="pdfBtn">导出 PDF</button>
       <button class="button ghost" id="wordBtn">导出 Word</button>
+      <button class="button ghost calendar-button" id="calendarBtn">订阅日历</button>
       <button class="button primary" id="addBtn">＋ 新增行程</button>
     </div>
   </header>
@@ -36,7 +37,7 @@
       <div class="section-heading"><div><p class="eyebrow">ITINERARY</p><h2>行程安排</h2></div><p>拖动卡片调整顺序 · 修改后点击保存</p></div>
       <div id="timeline"></div>
       <button class="add-row" id="addRowBtn">＋ 添加下一段行程</button>
-      <div class="save-panel"><p>所有旅行计划公开存储于 <a href="https://github.com/Chanwang98/travel/blob/main/data/plans.json" target="_blank" rel="noreferrer">GitHub 仓库</a></p><button class="button primary large" id="saveBtn">保存并同步到 GitHub</button></div>
+      <div class="save-panel"><p>所有旅行计划公开存储于 <a href="https://github.com/Chanwang98/travel/blob/main/data/plans.json" target="_blank" rel="noreferrer">GitHub 仓库</a></p><div class="save-actions"><button class="button ghost large" id="calendarPanelBtn">订阅到 Apple 日历</button><button class="button primary large" id="saveBtn">保存并同步到 GitHub</button></div></div>
     </section>
   </main>
 
@@ -64,6 +65,15 @@
     </form>
   </dialog>
 
+  <dialog id="calendarDialog" class="calendar-dialog">
+    <div class="modal-heading"><div><p class="eyebrow">SUBSCRIBED CALENDAR</p><h2>订阅旅行日历</h2></div><button type="button" class="close" data-close="calendarDialog">×</button></div>
+    <div class="calendar-ready"><span class="calendar-symbol">31</span><div><strong id="calendarPlanName">旅行日历</strong><p>网页保存后订阅源会自动更新，Apple 日历将在下次刷新时同步。</p></div></div>
+    <label class="token-label"><span>行程所在时区</span><select id="calendarTimezone"><option value="Asia/Shanghai">中国标准时间</option><option value="Asia/Tokyo">日本标准时间</option><option value="Asia/Bangkok">泰国时间</option><option value="Europe/London">英国时间</option><option value="Europe/Paris">欧洲中部时间</option><option value="America/New_York">美国东部时间</option><option value="America/Los_Angeles">美国西部时间</option><option value="Australia/Sydney">悉尼时间</option></select></label>
+    <label class="token-label calendar-url-label"><span>永久订阅地址</span><div class="calendar-url-row"><input id="calendarUrl" readonly><button type="button" class="button ghost" id="copyCalendarUrl">复制</button></div></label>
+    <div class="privacy-note calendar-note"><strong>这是动态订阅，不是一次性导入</strong><p>行程标题、开始与结束时间、地点、类型详情和备注都会写入日历。Apple 的刷新时间由系统决定，网页更新后手机端可能不会立刻变化。</p></div>
+    <div class="calendar-actions"><button type="button" class="button ghost" id="refreshCalendarBtn">更新订阅源</button><a class="button primary" id="openCalendarLink" href="#">在 Apple 日历中打开</a></div>
+  </dialog>
+
   <dialog id="plansDialog" class="plans-dialog">
     <div class="modal-heading"><div><p class="eyebrow">MY TRIPS</p><h2>我的旅行计划</h2></div><button type="button" class="close" data-close="plansDialog">×</button></div>
     <div class="plans-toolbar"><p>切换当前计划，或查看过去的旅行。</p><div><button type="button" class="button ghost" id="plansSettingsBtn">同步设置</button><button type="button" class="button primary" id="newPlanBtn">＋ 新建旅行</button></div></div>
@@ -89,6 +99,6 @@
   </dialog>
 
   <div id="toast" role="status"></div>
-  <script src="./app.js?v=20260813-11"></script>
+  <script src="./app.js?v=20260813-13"></script>
 </body>
 </html>
