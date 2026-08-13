@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#f5f8ff">
   <title>旅迹 · Travel Planner</title>
-  <link rel="stylesheet" href="./styles.css?v=20260813-3">
+  <link rel="stylesheet" href="./styles.css?v=20260813-4">
 </head>
 <body>
   <header class="topbar">
@@ -55,7 +55,7 @@
         <div class="wide duration-summary">计算结果：<output id="durationOutput">1小时</output></div>
       </div></div>
       <div class="form-section"><h3>行程信息</h3><div class="form-grid">
-        <label class="wide"><span>行程名称</span><input id="itemTitle" required placeholder="例如：办理入住"></label>
+        <label class="wide"><span>行程名称</span><div class="editable-select"><input id="itemTitle" required autocomplete="off" placeholder="选择常用名称，或直接输入"><button type="button" id="titleMenuBtn" aria-label="选择常用行程名称" aria-expanded="false">⌄</button><div id="titleMenu" class="suggestion-menu" role="listbox" hidden></div></div><small class="field-help">可选择常用名称，也可自由修改</small></label>
         <label class="wide"><span>地点 / 路线</span><input id="location" placeholder="出发地 → 目的地，或景点地址"></label>
         <label><span>交通方式</span><select id="transport"></select></label>
         <label><span>交通详情</span><input id="details" placeholder="车次、座位、地铁线、费用"></label>
@@ -76,6 +76,6 @@
   </dialog>
 
   <div id="toast" role="status"></div>
-  <script src="./app.js?v=20260813-3"></script>
+  <script src="./app.js?v=20260813-4"></script>
 </body>
 </html>

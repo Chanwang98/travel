@@ -2,6 +2,7 @@ const REPO = "Chanwang98/travel";
 const FILE_PATH = "data/plan.json";
 const API = `https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`;
 const transports = ["飞机","高铁","火车","地铁","公交","打车","自驾","骑行","步行","轮渡"];
+const titleSuggestions = ["出发","交通出行","乘车 / 换乘","抵达目的地","前往酒店","办理入住","行李寄存","取票 / 安检","候机 / 候车","酒店休息","酒店早餐","早餐","午餐","下午茶","晚餐","夜宵","前往景点","景点游览","博物馆参观","城市漫步","拍照打卡","看日出","看日落","购物","咖啡休息","温泉 / SPA","自由活动","集合","演出 / 活动","酒吧 / 夜生活","返回酒店","办理退房","前往车站 / 机场","返程"];
 const iconPaths = {
   飞机:'<path d="M3 11.5 21 4l-5.5 7 4.5 2-2 2-5-1.5-3.5 4.5-2 .5 1.5-6L3 11.5Z"/>',
   高铁:'<path d="M7 3h10c2 0 3 1.6 3 4v7c0 2-1.5 3-3.5 3h-9C5.5 17 4 16 4 14V7c0-2.4 1-4 3-4Z"/><path d="M7 7h10M7 13h.01M17 13h.01M8 17l-2 3M16 17l2 3M8 20h8"/>',
@@ -125,11 +126,21 @@ function updateTimeForm(){
   }else $("durationMinutes").value=durationBetween($("startTime").value,$("endTime").value);
   $("durationOutput").textContent=formatDuration($("durationMinutes").value);
 }
+function renderTitleSuggestions(){
+  const query=$("itemTitle").value.trim().toLowerCase();
+  const matches=query?titleSuggestions.filter(value=>value.toLowerCase().includes(query)):titleSuggestions;
+  $("titleMenu").innerHTML=matches.length?matches.map(value=>`<button type="button" role="option" data-title="${escapeHtml(value)}">${escapeHtml(value)}</button>`).join(""):`<p>没有匹配项，继续输入即可使用自定义名称</p>`;
+}
+function toggleTitleMenu(open){
+  const shouldOpen=typeof open==="boolean"?open:$("titleMenu").hidden;
+  $("titleMenu").hidden=!shouldOpen; $("titleMenuBtn").setAttribute("aria-expanded",String(shouldOpen)); $("titleMenuBtn").classList.toggle("open",shouldOpen);
+  if(shouldOpen)renderTitleSuggestions();
+}
 
 function openItem(id){
   const previous=id?previousForItem(id):plan.items.at(-1); const fallbackStart=previous?.endTime||"09:00";
   const item=normalizedItem(plan.items.find(x=>x.id===id)||{id:`item-${Date.now()}`,date:previous?.date||"",startTime:fallbackStart,endTime:minutesToTime(timeToMinutes(fallbackStart)+60),linkedPrevious:Boolean(previous),timeMode:"duration",durationMinutes:60,title:"",location:"",transport:"步行",details:"",note:""});
-  $("modalTitle").textContent=id?"编辑行程":"新增行程"; $("itemId").value=item.id; $("itemDate").value=toDateInputValue(item.date); updateWeekday(); $("linkedPrevious").checked=item.linkedPrevious; $("startTime").value=item.startTime; $("endTime").value=item.endTime; document.querySelector(`input[name="timeMode"][value="${item.timeMode}"]`).checked=true; $("durationMinutes").value=item.durationMinutes; $("itemTitle").value=item.title; $("location").value=item.location; $("transport").value=item.transport; $("details").value=item.details; $("note").value=item.note; $("deleteBtn").style.visibility=id?"visible":"hidden"; updateTimeForm(); $("itemDialog").showModal();
+  $("modalTitle").textContent=id?"编辑行程":"新增行程"; $("itemId").value=item.id; $("itemDate").value=toDateInputValue(item.date); updateWeekday(); $("linkedPrevious").checked=item.linkedPrevious; $("startTime").value=item.startTime; $("endTime").value=item.endTime; document.querySelector(`input[name="timeMode"][value="${item.timeMode}"]`).checked=true; $("durationMinutes").value=item.durationMinutes; $("itemTitle").value=item.title; toggleTitleMenu(false); $("location").value=item.location; $("transport").value=item.transport; $("details").value=item.details; $("note").value=item.note; $("deleteBtn").style.visibility=id?"visible":"hidden"; updateTimeForm(); $("itemDialog").showModal();
 }
 function saveItem(event){
   event.preventDefault(); updateTimeForm(); const item={id:$("itemId").value,date:formatDateWithWeekday($("itemDate").value),startTime:$("startTime").value,endTime:$("endTime").value,linkedPrevious:$("linkedPrevious").checked,timeMode:selectedTimeMode(),durationMinutes:Math.max(1,Number($("durationMinutes").value)||1),title:$("itemTitle").value.trim(),location:$("location").value.trim(),transport:$("transport").value,details:$("details").value.trim(),note:$("note").value.trim()}; const index=plan.items.findIndex(x=>x.id===item.id); if(index>=0)plan.items[index]=item;else plan.items.push(item); recalculateSchedule(index>=0?index:plan.items.length-1); $("itemDialog").close();render();markChanged();
@@ -157,6 +168,10 @@ $("addBtn").onclick=$("addRowBtn").onclick=()=>openItem(); $("itemForm").onsubmi
 $("itemDate").addEventListener("change",updateWeekday);
 ["linkedPrevious","startTime","endTime","durationMinutes"].forEach(id=>$(id).addEventListener("input",updateTimeForm));
 document.querySelectorAll('input[name="timeMode"]').forEach(input=>input.addEventListener("change",updateTimeForm));
+$("titleMenuBtn").onclick=()=>toggleTitleMenu();
+$("itemTitle").addEventListener("input",()=>{if(!$("titleMenu").hidden)renderTitleSuggestions()});
+$("titleMenu").addEventListener("click",event=>{const button=event.target.closest("[data-title]");if(!button)return;$("itemTitle").value=button.dataset.title;toggleTitleMenu(false);$("itemTitle").focus()});
+document.addEventListener("click",event=>{if(!event.target.closest(".editable-select"))toggleTitleMenu(false)});
 $("deleteBtn").onclick=()=>{const index=plan.items.findIndex(x=>x.id===$("itemId").value);plan.items=plan.items.filter(x=>x.id!==$("itemId").value);recalculateSchedule(Math.max(0,index));$("itemDialog").close();render();markChanged()};
 $("settingsBtn").onclick=()=>{$("tokenInput").value=token();$("settingsDialog").showModal()};
 $("syncStatus").onclick=()=>{if(dirty)saveToGithub()};
