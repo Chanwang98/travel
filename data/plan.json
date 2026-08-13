@@ -1,11 +1,7 @@
 {
-  "title": "南京 · 周末漫游",
-  "destination": "南京",
-  "dateRange": "8月15日 — 8月16日",
-  "companions": "2 位旅行者",
-  "items": [
-    {"id":"sample-1","date":"8月15日 · 周六","startTime":"10:25","endTime":"11:47","title":"抵达南京","location":"上海虹桥 → 南京南","transport":"高铁","details":"G12 · 05车 08A/08B","note":"提前 30 分钟到站，南京南站北广场出站。"},
-    {"id":"sample-2","date":"8月15日 · 周六","startTime":"12:10","endTime":"12:40","title":"前往酒店","location":"南京南站 → 新街口","transport":"地铁","details":"1号线 · 北广场入口 · 15号口出","note":"约 9 站，出站后步行 280 米。"},
-    {"id":"sample-3","date":"8月15日 · 周六","startTime":"14:00","endTime":"16:30","title":"梧桐大道散步","location":"陵园路 · 美龄宫周边","transport":"步行","details":"约 3.2 km · 轻松路线","note":"带一瓶水，下午光线适合拍照。"}
-  ]
+  "title": "我的旅行计划",
+  "destination": "",
+  "dateRange": "",
+  "companions": "",
+  "items": []
 }
