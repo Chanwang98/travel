@@ -143,6 +143,20 @@
       "transport": "步行",
       "details": "",
       "note": ""
+    },
+    {
+      "id": "item-1786623246447",
+      "date": "2026年8月15日 · 周六",
+      "startTime": "17:10",
+      "endTime": "19:00",
+      "linkedPrevious": true,
+      "timeMode": "fixedEnd",
+      "durationMinutes": 110,
+      "title": "晚餐",
+      "location": "金陵家宴·金陵春.南京菜(夫子庙店)",
+      "transport": "步行",
+      "details": "",
+      "note": ""
     }
   ]
 }
