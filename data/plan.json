@@ -13,7 +13,10 @@
       "location": "上海虹桥—南京南",
       "transport": "高铁",
       "details": "G676",
-      "note": ""
+      "note": "",
+      "linkedPrevious": false,
+      "timeMode": "duration",
+      "durationMinutes": 82
     },
     {
       "id": "item-1786615574090",
@@ -24,7 +27,10 @@
       "location": "南京南—酒店",
       "transport": "地铁",
       "details": "3 号线",
-      "note": ""
+      "note": "",
+      "linkedPrevious": false,
+      "timeMode": "duration",
+      "durationMinutes": 33
     }
   ]
 }
