@@ -19,6 +19,27 @@ function setStatus(text,type=""){ $("syncStatus").className=`sync ${type}`; $("s
 function toast(text){ const node=$("toast"); node.textContent=text; node.classList.add("show"); setTimeout(()=>node.classList.remove("show"),2400) }
 function markChanged(){ setStatus("有未同步修改") }
 
+function parseItemDate(dateText, now=new Date()){
+  const normalized=String(dateText||"").trim();
+  let match=normalized.match(/(\d{4})\s*[-/.年]\s*(\d{1,2})\s*[-/.月]\s*(\d{1,2})/);
+  if(match)return {year:Number(match[1]),month:Number(match[2]),day:Number(match[3])};
+  match=normalized.match(/(\d{1,2})\s*月\s*(\d{1,2})\s*日?/);
+  if(!match)return null;
+  let year=now.getFullYear(); const month=Number(match[1]),day=Number(match[2]);
+  const candidate=new Date(year,month-1,day); const distance=candidate.getTime()-now.getTime();
+  if(distance>1000*60*60*24*180)year-=1;
+  if(distance<-(1000*60*60*24*180))year+=1;
+  return {year,month,day};
+}
+function getItemStatus(item,now=new Date()){
+  const date=parseItemDate(item.date,now); if(!date)return {key:"unknown",label:"日期待完善"};
+  const toDate=(time,fallback)=>{const parts=String(time||fallback).split(":").map(Number);return new Date(date.year,date.month-1,date.day,parts[0]||0,parts[1]||0,0)};
+  const start=toDate(item.startTime,"00:00"),end=toDate(item.endTime,"23:59");
+  if(now<start)return {key:"upcoming",label:"待开始"};
+  if(now>end)return {key:"ended",label:"已结束"};
+  return {key:"active",label:"进行中"};
+}
+
 async function loadPlan(){
   try{
     const response=await fetch(`${API}?ref=main&t=${Date.now()}`,{headers:headers(Boolean(token()))});
@@ -42,7 +63,7 @@ function render(){
   });
   document.querySelectorAll(".more").forEach(button=>button.addEventListener("click",()=>openItem(button.dataset.id)));
 }
-function cardHtml(item){ return `<article class="card" draggable="true" data-id="${escapeHtml(item.id)}"><button class="handle" aria-label="拖动">⠿</button><div class="time"><strong>${escapeHtml(item.startTime)}</strong><span>${escapeHtml(item.endTime)}</span></div><div class="icon">${icons[item.transport]||"•"}</div><div class="card-main"><div class="title-row"><div><h3>${escapeHtml(item.title)}</h3><p class="location">${escapeHtml(item.location)}</p></div><button class="more" data-id="${escapeHtml(item.id)}" aria-label="编辑">•••</button></div><div class="pill"><span>${escapeHtml(item.transport)}</span><span>·</span><span>${escapeHtml(item.details)}</span></div>${item.note?`<p class="note">${escapeHtml(item.note)}</p>`:""}</div></article>` }
+function cardHtml(item){ const status=getItemStatus(item); return `<article class="card status-${status.key}" draggable="true" data-id="${escapeHtml(item.id)}"><button class="handle" aria-label="拖动">⠿</button><div class="time"><strong>${escapeHtml(item.startTime)}</strong><span>${escapeHtml(item.endTime)}</span><mark class="status-badge">${status.label}</mark></div><div class="icon">${icons[item.transport]||"•"}</div><div class="card-main"><div class="title-row"><div><h3>${escapeHtml(item.title)}</h3><p class="location">${escapeHtml(item.location)}</p></div><button class="more" data-id="${escapeHtml(item.id)}" aria-label="编辑">•••</button></div><div class="pill"><span>${escapeHtml(item.transport)}</span><span>·</span><span>${escapeHtml(item.details)}</span></div>${item.note?`<p class="note">${escapeHtml(item.note)}</p>`:""}</div></article>` }
 function reorder(target){ if(!dragging||dragging===target)return; const from=plan.items.findIndex(x=>x.id===dragging),to=plan.items.findIndex(x=>x.id===target); const [moved]=plan.items.splice(from,1); plan.items.splice(to,0,moved); render(); markChanged() }
 
 function openItem(id){
@@ -72,3 +93,4 @@ $("settingsForm").onsubmit=e=>{e.preventDefault();localStorage.setItem("travelGi
 $("clearTokenBtn").onclick=()=>{localStorage.removeItem("travelGithubToken");$("tokenInput").value="";toast("本机令牌已清除")};
 document.querySelectorAll("[data-close]").forEach(button=>button.onclick=()=>$(button.dataset.close).close());
 loadPlan();
+setInterval(()=>render(),60000);
