@@ -9,14 +9,14 @@
       "date": "2026年8月15日 · 周六",
       "startTime": "10:25",
       "endTime": "11:47",
-      "title": "交通出行",
+      "linkedPrevious": false,
+      "timeMode": "duration",
+      "durationMinutes": 82,
+      "title": "出发",
       "location": "上海虹桥—南京南",
       "transport": "高铁",
       "details": "G676",
-      "note": "",
-      "linkedPrevious": false,
-      "timeMode": "duration",
-      "durationMinutes": 82
+      "note": ""
     },
     {
       "id": "item-1786620512671",
@@ -57,6 +57,20 @@
       "title": "办理入住",
       "location": "南京南站诺富特酒店",
       "transport": "步行",
+      "details": "",
+      "note": ""
+    },
+    {
+      "id": "item-1786622593251",
+      "date": "2026年8月15日 · 周六",
+      "startTime": "12:32",
+      "endTime": "12:57",
+      "linkedPrevious": true,
+      "timeMode": "duration",
+      "durationMinutes": 25,
+      "title": "交通出行",
+      "location": "南京南站诺富特酒店——李记清真馆(打钉巷店)",
+      "transport": "打车",
       "details": "",
       "note": ""
     }
