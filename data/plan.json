@@ -97,7 +97,7 @@
       "timeMode": "duration",
       "durationMinutes": 25,
       "title": "前往景点",
-      "location": "李记清真馆(打钉巷店)——老东门",
+      "location": "李记清真馆(打钉巷店)——老门东",
       "transport": "骑行",
       "details": "",
       "note": ""
@@ -111,7 +111,7 @@
       "timeMode": "fixedEnd",
       "durationMinutes": 158,
       "title": "景点游览",
-      "location": "老东门",
+      "location": "老门东",
       "transport": "步行",
       "details": "",
       "note": ""
