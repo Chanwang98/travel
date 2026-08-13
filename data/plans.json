@@ -4,10 +4,10 @@
     {
       "id": "trip-migrated-1",
       "createdAt": "2026-08-13T13:05:08.350Z",
-      "updatedAt": "2026-08-13T13:05:33.676Z",
-      "title": "南京一日",
+      "updatedAt": "2026-08-13T13:12:30.418Z",
+      "title": "南京两日",
       "destination": "南京",
-      "dateRange": "2026.8.15-16",
+      "dateRange": "2026.8.15–8.16",
       "companions": "3",
       "items": [
         {
