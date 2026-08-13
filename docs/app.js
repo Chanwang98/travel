@@ -2,7 +2,19 @@ const REPO = "Chanwang98/travel";
 const FILE_PATH = "data/plan.json";
 const API = `https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`;
 const transports = ["飞机","高铁","火车","地铁","公交","打车","自驾","骑行","步行","轮渡"];
-const icons = {飞机:"飞",高铁:"铁",火车:"车",地铁:"M",公交:"公",打车:"的",自驾:"驾",骑行:"骑",步行:"步",轮渡:"船"};
+const iconPaths = {
+  飞机:'<path d="M3 11.5 21 4l-5.5 7 4.5 2-2 2-5-1.5-3.5 4.5-2 .5 1.5-6L3 11.5Z"/>',
+  高铁:'<path d="M7 3h10c2 0 3 1.6 3 4v7c0 2-1.5 3-3.5 3h-9C5.5 17 4 16 4 14V7c0-2.4 1-4 3-4Z"/><path d="M7 7h10M7 13h.01M17 13h.01M8 17l-2 3M16 17l2 3M8 20h8"/>',
+  火车:'<path d="M6 3h12v13H6zM6 8h12M9 12h.01M15 12h.01M8 16l-2 4M16 16l2 4M7 20h10"/>',
+  地铁:'<circle cx="12" cy="12" r="9"/><path d="M8 16V8l4 5 4-5v8"/>',
+  公交:'<path d="M5 4h14v13H5zM5 9h14M8 13h.01M16 13h.01M7 17v3M17 17v3"/>',
+  打车:'<path d="m5 10 2-5h10l2 5M4 10h16v7H4zM7 14h.01M17 14h.01M7 17v2M17 17v2M9 5l1-2h4l1 2"/>',
+  自驾:'<path d="m4 12 2-6h12l2 6v6H4zM7 15h.01M17 15h.01M6 18v2M18 18v2M6 10h12"/>',
+  骑行:'<circle cx="6" cy="17" r="3"/><circle cx="18" cy="17" r="3"/><circle cx="13" cy="5" r="2"/><path d="m9 17 3-6 3 3h3M9 17l-2-6h5l3 6"/>',
+  步行:'<circle cx="13" cy="4" r="2"/><path d="m10 21 1-6-3-3 2-5 4 3 3 1M11 15l5 6M8 12l-3 3"/>',
+  轮渡:'<path d="m3 17 3 2 3-2 3 2 3-2 3 2 3-2M5 14l2-7h10l2 7M8 7V4h8v3M7 11h10"/>'
+};
+function transportIcon(name){ return `<svg viewBox="0 0 24 24" aria-hidden="true">${iconPaths[name]||'<circle cx="12" cy="12" r="7"/><path d="M12 8v8M8 12h8"/>'}</svg>` }
 let plan = {title:"我的旅行",destination:"",dateRange:"",companions:"",items:[]};
 let fileSha = null;
 let dragging = null;
@@ -96,7 +108,7 @@ function render(){
   document.querySelectorAll(".more").forEach(button=>button.addEventListener("click",()=>openItem(button.dataset.id)));
   document.querySelectorAll(".move-button").forEach(button=>button.addEventListener("click",()=>moveItem(button.dataset.id,Number(button.dataset.direction))));
 }
-function cardHtml(item){ const status=getItemStatus(item); return `<article class="card status-${status.key}" draggable="true" data-id="${escapeHtml(item.id)}"><button class="handle" aria-label="拖动">⠿</button><div class="time"><strong>${escapeHtml(item.startTime)}</strong><span>${escapeHtml(item.endTime)}</span><mark class="status-badge">${status.label}</mark></div><div class="icon" aria-hidden="true">${icons[item.transport]||"行"}</div><div class="card-main"><div class="title-row"><div><h3>${escapeHtml(item.title)}</h3><p class="location">${escapeHtml(item.location)}</p></div><button class="more" data-id="${escapeHtml(item.id)}" aria-label="编辑行程">•••</button></div><div class="pill"><span>${escapeHtml(item.transport)}</span>${item.details?`<span>·</span><span>${escapeHtml(item.details)}</span>`:""}<span>·</span><span>${formatDuration(item.durationMinutes)}</span></div>${item.note?`<p class="note">${escapeHtml(item.note)}</p>`:""}</div><div class="mobile-move" aria-label="调整行程顺序"><button class="move-button" data-id="${escapeHtml(item.id)}" data-direction="-1" aria-label="向上移动">↑</button><button class="move-button" data-id="${escapeHtml(item.id)}" data-direction="1" aria-label="向下移动">↓</button></div></article>` }
+function cardHtml(item){ const status=getItemStatus(item); return `<article class="card status-${status.key}" draggable="true" data-id="${escapeHtml(item.id)}"><button class="handle" aria-label="拖动">⠿</button><div class="time"><strong>${escapeHtml(item.startTime)}</strong><span>${escapeHtml(item.endTime)}</span><mark class="status-badge">${status.label}</mark></div><div class="icon">${transportIcon(item.transport)}</div><div class="card-main"><div class="title-row"><div><h3>${escapeHtml(item.title)}</h3><p class="location">${escapeHtml(item.location)}</p></div><button class="more" data-id="${escapeHtml(item.id)}" aria-label="编辑行程">•••</button></div><div class="pill"><span>${escapeHtml(item.transport)}</span>${item.details?`<span>·</span><span>${escapeHtml(item.details)}</span>`:""}<span>·</span><span>${formatDuration(item.durationMinutes)}</span></div>${item.note?`<p class="note">${escapeHtml(item.note)}</p>`:""}</div><div class="mobile-move" aria-label="调整行程顺序"><button class="move-button" data-id="${escapeHtml(item.id)}" data-direction="-1" aria-label="向上移动">↑</button><button class="move-button" data-id="${escapeHtml(item.id)}" data-direction="1" aria-label="向下移动">↓</button></div></article>` }
 function reorder(target){ if(!dragging||dragging===target)return; const from=plan.items.findIndex(x=>x.id===dragging),to=plan.items.findIndex(x=>x.id===target); const [moved]=plan.items.splice(from,1); plan.items.splice(to,0,moved); recalculateSchedule(Math.min(from,to)); render(); markChanged() }
 function moveItem(id,direction){ const from=plan.items.findIndex(item=>item.id===id),to=from+direction; if(from<0||to<0||to>=plan.items.length)return; [plan.items[from],plan.items[to]]=[plan.items[to],plan.items[from]]; recalculateSchedule(Math.min(from,to)); render(); markChanged() }
 
