@@ -367,6 +367,20 @@
       "transport": "高铁",
       "details": "G745",
       "note": "【B4检票口】"
+    },
+    {
+      "id": "item-1786625612292",
+      "date": "2026年8月12日 · 周三",
+      "startTime": "18:21",
+      "endTime": "19:21",
+      "linkedPrevious": true,
+      "timeMode": "duration",
+      "durationMinutes": 60,
+      "title": "11",
+      "location": "",
+      "transport": "步行",
+      "details": "",
+      "note": ""
     }
   ]
 }
