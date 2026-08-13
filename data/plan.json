@@ -45,6 +45,20 @@
       "transport": "打车",
       "details": "",
       "note": ""
+    },
+    {
+      "id": "item-1786622510803",
+      "date": "2026年8月15日 · 周六",
+      "startTime": "12:12",
+      "endTime": "12:32",
+      "linkedPrevious": true,
+      "timeMode": "duration",
+      "durationMinutes": 20,
+      "title": "办理入住",
+      "location": "",
+      "transport": "步行",
+      "details": "",
+      "note": ""
     }
   ]
 }
