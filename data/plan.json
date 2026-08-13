@@ -87,6 +87,20 @@
       "transport": "步行",
       "details": "",
       "note": ""
+    },
+    {
+      "id": "item-1786622819560",
+      "date": "2026年8月15日 · 周六",
+      "startTime": "13:27",
+      "endTime": "13:52",
+      "linkedPrevious": true,
+      "timeMode": "duration",
+      "durationMinutes": 25,
+      "title": "交通出行",
+      "location": "李记清真馆(打钉巷店)——老东门",
+      "transport": "骑行",
+      "details": "",
+      "note": ""
     }
   ]
 }
