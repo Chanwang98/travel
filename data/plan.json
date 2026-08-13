@@ -236,7 +236,7 @@
       "linkedPrevious": true,
       "timeMode": "fixedEnd",
       "durationMinutes": 75,
-      "title": "酒店早餐",
+      "title": "酒店早餐 + 酒店退房",
       "location": "南京南站诺富特酒店",
       "transport": "步行",
       "details": "",
@@ -311,6 +311,20 @@
       "transport": "步行",
       "details": "",
       "note": "德基广场等"
+    },
+    {
+      "id": "item-1786624081923",
+      "date": "2026年8月16日 · 周日",
+      "startTime": "14:30",
+      "endTime": "15:00",
+      "linkedPrevious": true,
+      "timeMode": "duration",
+      "durationMinutes": 30,
+      "title": "返回酒店",
+      "location": "南京南站诺富特酒店",
+      "transport": "打车",
+      "details": "",
+      "note": ""
     }
   ]
 }
