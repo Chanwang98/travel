@@ -5,13 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#f5f8ff">
   <title>旅迹 · Travel Planner</title>
-  <link rel="stylesheet" href="./styles.css?v=20260813-9">
+  <link rel="stylesheet" href="./styles.css?v=20260813-10">
 </head>
 <body>
   <header class="topbar">
     <a class="brand" href="#top"><span class="brand-mark">旅</span><span>旅迹</span></a>
     <div class="actions">
       <span id="syncStatus" class="sync"><i></i>读取中…</span>
+      <button class="button ghost trips-button" id="plansBtn">我的行程</button>
       <button class="button ghost" id="settingsBtn">同步设置</button>
       <button class="button ghost" id="pdfBtn">导出 PDF</button>
       <button class="button ghost" id="wordBtn">导出 Word</button>
@@ -35,7 +36,7 @@
       <div class="section-heading"><div><p class="eyebrow">ITINERARY</p><h2>行程安排</h2></div><p>拖动卡片调整顺序 · 修改后点击保存</p></div>
       <div id="timeline"></div>
       <button class="add-row" id="addRowBtn">＋ 添加下一段行程</button>
-      <div class="save-panel"><p>数据公开存储于 <a href="https://github.com/Chanwang98/travel/blob/main/data/plan.json" target="_blank" rel="noreferrer">GitHub 仓库</a></p><button class="button primary large" id="saveBtn">保存并同步到 GitHub</button></div>
+      <div class="save-panel"><p>所有旅行计划公开存储于 <a href="https://github.com/Chanwang98/travel/blob/main/data/plans.json" target="_blank" rel="noreferrer">GitHub 仓库</a></p><button class="button primary large" id="saveBtn">保存并同步到 GitHub</button></div>
     </section>
   </main>
 
@@ -63,6 +64,21 @@
     </form>
   </dialog>
 
+  <dialog id="plansDialog" class="plans-dialog">
+    <div class="modal-heading"><div><p class="eyebrow">MY TRIPS</p><h2>我的旅行计划</h2></div><button type="button" class="close" data-close="plansDialog">×</button></div>
+    <div class="plans-toolbar"><p>切换当前计划，或查看过去的旅行。</p><div><button type="button" class="button ghost" id="plansSettingsBtn">同步设置</button><button type="button" class="button primary" id="newPlanBtn">＋ 新建旅行</button></div></div>
+    <section class="plan-group"><h3>当前与未来</h3><div id="currentPlans" class="plan-list"></div></section>
+    <section class="plan-group"><h3>历史行程</h3><div id="historyPlans" class="plan-list"></div></section>
+  </dialog>
+
+  <dialog id="newPlanDialog" class="new-plan-dialog">
+    <form id="newPlanForm">
+      <div class="modal-heading"><div><p class="eyebrow">NEW JOURNEY</p><h2>新建旅行</h2></div><button type="button" class="close" data-close="newPlanDialog">×</button></div>
+      <div class="form-grid"><label class="wide"><span>旅行名称</span><input id="newPlanTitle" required placeholder="例如：杭州周末游"></label><label><span>目的地</span><input id="newPlanDestination" placeholder="例如：杭州"></label><label><span>日期</span><input id="newPlanDateRange" placeholder="例如：9月5日—9月7日"></label><label class="wide"><span>同行</span><input id="newPlanCompanions" placeholder="例如：2位旅行者"></label></div>
+      <div class="modal-actions compact-actions"><span></span><span></span><button type="button" class="button ghost" data-close="newPlanDialog">取消</button><button type="submit" class="button primary">创建并打开</button></div>
+    </form>
+  </dialog>
+
   <dialog id="settingsDialog">
     <form id="settingsForm">
       <div class="modal-heading"><div><p class="eyebrow">GITHUB SYNC</p><h2>同步设置</h2></div><button type="button" class="close" data-close="settingsDialog">×</button></div>
@@ -73,6 +89,6 @@
   </dialog>
 
   <div id="toast" role="status"></div>
-  <script src="./app.js?v=20260813-9"></script>
+  <script src="./app.js?v=20260813-10"></script>
 </body>
 </html>

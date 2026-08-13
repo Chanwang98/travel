@@ -1,6 +1,8 @@
 const REPO = "Chanwang98/travel";
-const FILE_PATH = "data/plan.json";
+const FILE_PATH = "data/plans.json";
+const LEGACY_FILE_PATH = "data/plan.json";
 const API = `https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`;
+const LEGACY_API = `https://api.github.com/repos/${REPO}/contents/${LEGACY_FILE_PATH}`;
 const typeGroups = {
   "交通出行":["飞机","高铁","火车","地铁","公交","打车","自驾","骑行","步行","轮渡"],
   "餐饮休闲":["早餐","午餐","晚餐","下午茶","夜宵","咖啡","酒吧"],
@@ -50,7 +52,8 @@ function typeCategory(name){
   const category=Object.entries(typeGroups).find(([,values])=>values.includes(name))?.[0];
   return {"交通出行":"transport","餐饮休闲":"dining","住宿休息":"stay","游玩活动":"activity","其他事项":"other"}[category]||"other";
 }
-let plan = {title:"我的旅行",destination:"",dateRange:"",companions:"",items:[]};
+let planStore = {version:1,plans:[]};
+let plan = {id:"",title:"我的旅行",destination:"",dateRange:"",companions:"",items:[]};
 let fileSha = null;
 let dragging = null;
 let dirty = false;
@@ -67,6 +70,8 @@ function escapeHtml(value=""){ return String(value).replace(/[&<>"']/g,c=>({"&":
 function setStatus(text,type=""){ $("syncStatus").className=`sync ${type}`; $("syncStatus").innerHTML=`<i></i>${escapeHtml(text)}` }
 function toast(text){ const node=$("toast"); node.textContent=text; node.classList.add("show"); setTimeout(()=>node.classList.remove("show"),2400) }
 function markChanged(){ dirty=true; setStatus(token()?"有修改 · 30秒内自动同步":"有修改 · 请设置同步") }
+function newPlanId(){ return `trip-${Date.now()}-${Math.random().toString(36).slice(2,7)}` }
+function normalizePlan(value,index=0){ return {id:value.id||`trip-migrated-${index+1}`,createdAt:value.createdAt||new Date().toISOString(),updatedAt:value.updatedAt||new Date().toISOString(),title:value.title||"未命名旅行",destination:value.destination||"",dateRange:value.dateRange||"",companions:value.companions||"",items:(value.items||[]).map(normalizedItem)} }
 
 function parseItemDate(dateText, now=new Date()){
   const normalized=String(dateText||"").trim();
@@ -121,15 +126,23 @@ function getItemStatus(item,now=new Date()){
 async function loadPlan(){
   try{
     const response=await fetch(`${API}?ref=main&t=${Date.now()}`,{headers:headers(Boolean(token()))});
-    if(!response.ok) throw new Error(`GitHub 返回 ${response.status}`);
-    const result=await response.json(); fileSha=result.sha; plan=JSON.parse(decodeBase64(result.content)); plan.items=(plan.items||[]).map(normalizedItem); dirty=false; render(); setStatus("已与 GitHub 同步","ok");
+    if(!response.ok)throw new Error(`GitHub 返回 ${response.status}`);
+    const result=await response.json(),loaded=JSON.parse(decodeBase64(result.content)); fileSha=result.sha; dirty=false;
+    if(Array.isArray(loaded.plans)&&loaded.plans.length)planStore={version:1,plans:loaded.plans.map(normalizePlan)};
+    else{
+      const legacyResponse=await fetch(`${LEGACY_API}?ref=main&t=${Date.now()}`,{headers:headers(Boolean(token()))});
+      if(!legacyResponse.ok)throw new Error("无法读取原有行程");
+      const legacyResult=await legacyResponse.json(); planStore={version:1,plans:[normalizePlan(JSON.parse(decodeBase64(legacyResult.content)),0)]}; dirty=true;
+    }
+    const preferred=localStorage.getItem("travelActivePlanId"); plan=planStore.plans.find(value=>value.id===preferred)||planStore.plans[0]; localStorage.setItem("travelActivePlanId",plan.id);
+    render(); setStatus(dirty?(token()?"原有行程待迁移 · 30秒内同步":"原有行程待迁移 · 请设置同步"):"已与 GitHub 同步",dirty?"":"ok");
   }catch(error){ setStatus("读取失败","error"); toast(error.message) }
 }
 
 function syncMeta(){
   $("planTitle").value=plan.title||""; $("destination").value=plan.destination||""; $("dateRange").value=plan.dateRange||""; $("companions").value=plan.companions||"";
 }
-function collectMeta(){ plan.title=$("planTitle").value; plan.destination=$("destination").value; plan.dateRange=$("dateRange").value; plan.companions=$("companions").value }
+function collectMeta(){ plan.title=$("planTitle").value; plan.destination=$("destination").value; plan.dateRange=$("dateRange").value; plan.companions=$("companions").value; plan.updatedAt=new Date().toISOString() }
 function render(){
   syncMeta(); const groups=[];
   plan.items.forEach(item=>{ let group=groups.find(x=>x.date===item.date); if(!group){group={date:item.date||"待定日期",items:[]};groups.push(group)} group.items.push(item) });
@@ -142,6 +155,34 @@ function render(){
   });
   document.querySelectorAll(".more").forEach(button=>button.addEventListener("click",()=>openItem(button.dataset.id)));
   document.querySelectorAll(".move-button").forEach(button=>button.addEventListener("click",()=>moveItem(button.dataset.id,Number(button.dataset.direction))));
+}
+function planState(value){
+  if(!value.items.length)return {key:"draft",label:"规划中"};
+  const states=value.items.map(item=>getItemStatus(item).key);
+  if(states.includes("active"))return {key:"active",label:"进行中"};
+  if(states.every(key=>key==="ended"))return {key:"history",label:"已结束"};
+  return {key:"upcoming",label:"待出发"};
+}
+function planCardHtml(value){
+  const state=planState(value),active=value.id===plan.id;
+  return `<button type="button" class="plan-card${active?" selected":""}" data-plan-id="${escapeHtml(value.id)}"><span class="plan-card-main"><strong>${escapeHtml(value.title)}</strong><small>${escapeHtml(value.destination||"目的地待填写")} · ${escapeHtml(value.dateRange||"日期待填写")}</small></span><span class="plan-state ${state.key}">${state.label}</span>${active?'<span class="current-label">当前</span>':""}</button>`;
+}
+function renderPlanManager(){
+  const current=[],history=[]; planStore.plans.forEach(value=>(planState(value).key==="history"?history:current).push(value));
+  $("currentPlans").innerHTML=current.length?current.map(planCardHtml).join(""):'<p class="empty-plans">暂无当前或未来行程</p>';
+  $("historyPlans").innerHTML=history.length?history.map(planCardHtml).join(""):'<p class="empty-plans">历史行程会自动出现在这里</p>';
+  document.querySelectorAll("[data-plan-id]").forEach(button=>button.addEventListener("click",()=>switchPlan(button.dataset.planId)));
+}
+async function switchPlan(id){
+  if(id===plan.id){$("plansDialog").close();return}
+  collectMeta(); if(dirty&&token())await saveToGithub({automatic:true});
+  const target=planStore.plans.find(value=>value.id===id); if(!target)return;
+  plan=target; localStorage.setItem("travelActivePlanId",id); render(); $("plansDialog").close(); window.scrollTo({top:0,behavior:"smooth"}); toast(`已切换到「${plan.title}」`);
+}
+function createPlan(event){
+  event.preventDefault(); collectMeta();
+  const created=normalizePlan({id:newPlanId(),title:$("newPlanTitle").value.trim(),destination:$("newPlanDestination").value.trim(),dateRange:$("newPlanDateRange").value.trim(),companions:$("newPlanCompanions").value.trim(),items:[]});
+  planStore.plans.unshift(created); plan=created; localStorage.setItem("travelActivePlanId",created.id); $("newPlanDialog").close(); $("plansDialog").close(); render(); markChanged(); window.scrollTo({top:0,behavior:"smooth"}); toast("新旅行已创建，可以开始添加行程");
 }
 function cardHtml(item){ const status=getItemStatus(item),category=typeCategory(item.transport); return `<article class="card status-${status.key} category-${category}" draggable="true" data-id="${escapeHtml(item.id)}"><button class="handle" aria-label="拖动">⠿</button><div class="time"><strong>${escapeHtml(item.startTime)}</strong><span>${escapeHtml(item.endTime)}</span><mark class="status-badge">${status.label}</mark></div><div class="icon">${transportIcon(item.transport)}</div><div class="card-main"><div class="title-row"><div><h3>${escapeHtml(item.title)}</h3><p class="location">${escapeHtml(item.location)}</p></div><button class="more" data-id="${escapeHtml(item.id)}" aria-label="编辑行程">•••</button></div><div class="pill"><span class="type-chip">${escapeHtml(item.transport)}</span>${item.details?`<span>·</span><span>${escapeHtml(item.details)}</span>`:""}<span>·</span><span>${formatDuration(item.durationMinutes)}</span></div>${item.note?`<p class="note">${escapeHtml(item.note)}</p>`:""}</div><div class="mobile-move" aria-label="调整行程顺序"><button class="move-button" data-id="${escapeHtml(item.id)}" data-direction="-1" aria-label="向上移动">↑</button><button class="move-button" data-id="${escapeHtml(item.id)}" data-direction="1" aria-label="向下移动">↓</button></div></article>` }
 function reorder(target){ if(!dragging||dragging===target)return; const from=plan.items.findIndex(x=>x.id===dragging),to=plan.items.findIndex(x=>x.id===target); const [moved]=plan.items.splice(from,1); plan.items.splice(to,0,moved); recalculateSchedule(Math.min(from,to)); render(); markChanged() }
@@ -192,11 +233,11 @@ async function saveToGithub(options={}){
   }
   saving=true; setStatus(automatic?"正在自动同步…":"正在提交到 GitHub…"); $("saveBtn").disabled=true;
   try{
-    const response=await fetch(API,{method:"PUT",headers:{...headers(true),"Content-Type":"application/json"},body:JSON.stringify({message:`Update travel plan ${new Date().toLocaleString("zh-CN")}`,content:encodeBase64(JSON.stringify(plan,null,2)),sha:fileSha,branch:"main"})});
+    const response=await fetch(API,{method:"PUT",headers:{...headers(true),"Content-Type":"application/json"},body:JSON.stringify({message:`Update travel plans ${new Date().toLocaleString("zh-CN")}`,content:encodeBase64(JSON.stringify(planStore,null,2)),sha:fileSha,branch:"main"})});
     const result=await response.json(); if(!response.ok)throw new Error(result.message||`保存失败 ${response.status}`); fileSha=result.content.sha;dirty=false;setStatus("已与 GitHub 同步","ok");if(!automatic)toast("所有设备均可读取最新行程");
   }catch(error){setStatus("同步失败 · 点击重试","error");if(!automatic)toast(error.message)}finally{saving=false;$("saveBtn").disabled=false}
 }
-function exportWord(){ collectMeta(); const rows=plan.items.map(x=>`<tr><td>${escapeHtml(x.date)}</td><td>${escapeHtml(x.startTime)}–${escapeHtml(x.endTime)}</td><td>${escapeHtml(x.title)}<br>${escapeHtml(x.location)}</td><td>${escapeHtml(x.transport)}<br>${escapeHtml(x.details)}</td><td>${escapeHtml(x.note)}</td></tr>`).join(""); const html=`<meta charset="utf-8"><h1>${escapeHtml(plan.title)}</h1><table border="1" cellpadding="8"><tr><th>日期</th><th>时间</th><th>行程</th><th>交通</th><th>备注</th></tr>${rows}</table>`;const url=URL.createObjectURL(new Blob(["\ufeff",html],{type:"application/msword"}));const a=document.createElement("a");a.href=url;a.download=`${plan.title}.doc`;a.click();URL.revokeObjectURL(url) }
+function exportWord(){ collectMeta(); const rows=plan.items.map(x=>`<tr><td>${escapeHtml(x.date)}</td><td>${escapeHtml(x.startTime)}–${escapeHtml(x.endTime)}</td><td>${escapeHtml(x.title)}<br>${escapeHtml(x.location)}</td><td>${escapeHtml(x.transport)}<br>${escapeHtml(x.details)}</td><td>${escapeHtml(x.note)}</td></tr>`).join(""); const html=`<meta charset="utf-8"><h1>${escapeHtml(plan.title)}</h1><table border="1" cellpadding="8"><tr><th>日期</th><th>时间</th><th>行程</th><th>类型</th><th>备注</th></tr>${rows}</table>`;const url=URL.createObjectURL(new Blob(["\ufeff",html],{type:"application/msword"}));const a=document.createElement("a");a.href=url;a.download=`${plan.title}.doc`;a.click();URL.revokeObjectURL(url) }
 
 Object.entries(typeGroups).forEach(([label,values])=>{const group=document.createElement("optgroup");group.label=label;values.forEach(value=>group.append(new Option(value,value)));$("transport").append(group)});
 fields.forEach(id=>$(id).addEventListener("input",()=>{collectMeta();markChanged()}));
@@ -211,6 +252,10 @@ $("titleMenu").addEventListener("click",event=>{const button=event.target.closes
 document.addEventListener("click",event=>{if(!event.target.closest(".editable-select"))toggleTitleMenu(false)});
 $("deleteBtn").onclick=()=>{const index=plan.items.findIndex(x=>x.id===$("itemId").value);plan.items=plan.items.filter(x=>x.id!==$("itemId").value);recalculateSchedule(Math.max(0,index));$("itemDialog").close();render();markChanged()};
 $("settingsBtn").onclick=()=>{$("tokenInput").value=token();$("settingsDialog").showModal()};
+$("plansBtn").onclick=()=>{renderPlanManager();$("plansDialog").showModal()};
+$("plansSettingsBtn").onclick=()=>{$("plansDialog").close();$("tokenInput").value=token();$("settingsDialog").showModal()};
+$("newPlanBtn").onclick=()=>{$("newPlanForm").reset();$("newPlanTitle").value="新的旅行";$("newPlanDialog").showModal();setTimeout(()=>$("newPlanTitle").select(),0)};
+$("newPlanForm").onsubmit=createPlan;
 $("syncStatus").onclick=()=>{if(dirty)saveToGithub()};
 $("settingsForm").onsubmit=e=>{e.preventDefault();localStorage.setItem("travelGithubToken",$("tokenInput").value.trim());$("settingsDialog").close();toast("令牌已保存在本机");loadPlan()};
 $("clearTokenBtn").onclick=()=>{localStorage.removeItem("travelGithubToken");$("tokenInput").value="";toast("本机令牌已清除")};
