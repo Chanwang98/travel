@@ -40,7 +40,7 @@
       "linkedPrevious": true,
       "timeMode": "duration",
       "durationMinutes": 10,
-      "title": "交通出行",
+      "title": "前往酒店",
       "location": "南京南—南京南站诺富特酒店",
       "transport": "打车",
       "details": "",
@@ -55,7 +55,7 @@
       "timeMode": "duration",
       "durationMinutes": 20,
       "title": "办理入住",
-      "location": "",
+      "location": "南京南站诺富特酒店",
       "transport": "步行",
       "details": "",
       "note": ""
