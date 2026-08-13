@@ -185,6 +185,20 @@
       "transport": "打车",
       "details": "",
       "note": ""
+    },
+    {
+      "id": "item-1786623410848",
+      "date": "2026年8月15日 · 周六",
+      "startTime": "22:30",
+      "endTime": "23:30",
+      "linkedPrevious": true,
+      "timeMode": "duration",
+      "durationMinutes": 60,
+      "title": "看时间去夜店",
+      "location": "",
+      "transport": "步行",
+      "details": "",
+      "note": ""
     }
   ]
 }
