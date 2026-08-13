@@ -241,6 +241,20 @@
       "transport": "步行",
       "details": "",
       "note": ""
+    },
+    {
+      "id": "item-1786623717734",
+      "date": "2026年8月16日 · 周日",
+      "startTime": "10:15",
+      "endTime": "11:05",
+      "linkedPrevious": true,
+      "timeMode": "duration",
+      "durationMinutes": 50,
+      "title": "前往景点",
+      "location": "南京南站诺富特酒店——古鸡鸣寺",
+      "transport": "地铁",
+      "details": "【3号线】1口进 | 5口出",
+      "note": ""
     }
   ]
 }
