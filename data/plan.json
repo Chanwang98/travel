@@ -297,6 +297,20 @@
       "transport": "步行",
       "details": "",
       "note": ""
+    },
+    {
+      "id": "item-1786623985765",
+      "date": "2026年8月16日 · 周日",
+      "startTime": "13:55",
+      "endTime": "14:30",
+      "linkedPrevious": true,
+      "timeMode": "fixedEnd",
+      "durationMinutes": 35,
+      "title": "自由活动",
+      "location": "",
+      "transport": "步行",
+      "details": "",
+      "note": ""
     }
   ]
 }
