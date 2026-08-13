@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#f5f8ff">
   <title>旅迹 · Travel Planner</title>
-  <link rel="stylesheet" href="./styles.css?v=20260813-10">
+  <link rel="stylesheet" href="./styles.css?v=20260813-11">
 </head>
 <body>
   <header class="topbar">
@@ -26,13 +26,13 @@
       <div class="editable-title"><input id="planTitle" class="title-input" aria-label="旅行标题" placeholder="输入旅行标题"></div>
       <div class="trip-meta">
         <label><span>目的地</span><input id="destination" placeholder="点击填写"></label><b></b>
-        <label><span>日期</span><input id="dateRange" placeholder="点击填写"></label><b></b>
+        <label><span>日期</span><input id="dateRange" readonly placeholder="添加行程后自动生成" title="根据行程安排自动生成"></label><b></b>
         <label><span>同行</span><input id="companions" placeholder="点击填写"></label>
       </div>
     </section>
 
     <section class="planner">
-      <div class="edit-reminder">页面标题、目的地、日期和同行均可直接点击修改，修改后点击下方“保存并同步到 GitHub”。</div>
+      <div class="edit-reminder">标题、目的地和同行可直接修改；日期会根据行程安排的首尾日期自动生成。</div>
       <div class="section-heading"><div><p class="eyebrow">ITINERARY</p><h2>行程安排</h2></div><p>拖动卡片调整顺序 · 修改后点击保存</p></div>
       <div id="timeline"></div>
       <button class="add-row" id="addRowBtn">＋ 添加下一段行程</button>
@@ -89,6 +89,6 @@
   </dialog>
 
   <div id="toast" role="status"></div>
-  <script src="./app.js?v=20260813-10"></script>
+  <script src="./app.js?v=20260813-11"></script>
 </body>
 </html>

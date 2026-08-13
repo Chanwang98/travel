@@ -94,6 +94,14 @@ function formatDateWithWeekday(value){
   const weekday=new Intl.DateTimeFormat("zh-CN",{weekday:"short"}).format(date);
   return `${year}年${month}月${day}日 · ${weekday}`;
 }
+function derivePlanDateRange(value){
+  const dates=value.items.map(item=>parseItemDate(item.date)).filter(Boolean).map(parts=>new Date(parts.year,parts.month-1,parts.day)).sort((a,b)=>a-b);
+  if(!dates.length)return value.dateRange||"";
+  const first=dates[0],last=dates.at(-1),format=date=>`${date.getFullYear()}.${date.getMonth()+1}.${date.getDate()}`;
+  if(first.getTime()===last.getTime())return format(first);
+  if(first.getFullYear()===last.getFullYear())return `${format(first)}–${last.getMonth()+1}.${last.getDate()}`;
+  return `${format(first)}–${format(last)}`;
+}
 function updateWeekday(){
   const value=$("itemDate").value; $("weekdayOutput").textContent=value?formatDateWithWeekday(value).split(" · ")[1]:"请选择日期";
 }
@@ -140,9 +148,9 @@ async function loadPlan(){
 }
 
 function syncMeta(){
-  $("planTitle").value=plan.title||""; $("destination").value=plan.destination||""; $("dateRange").value=plan.dateRange||""; $("companions").value=plan.companions||"";
+  plan.dateRange=derivePlanDateRange(plan); $("planTitle").value=plan.title||""; $("destination").value=plan.destination||""; $("dateRange").value=plan.dateRange||""; $("companions").value=plan.companions||"";
 }
-function collectMeta(){ plan.title=$("planTitle").value; plan.destination=$("destination").value; plan.dateRange=$("dateRange").value; plan.companions=$("companions").value; plan.updatedAt=new Date().toISOString() }
+function collectMeta(){ plan.title=$("planTitle").value; plan.destination=$("destination").value; plan.dateRange=derivePlanDateRange(plan); plan.companions=$("companions").value; plan.updatedAt=new Date().toISOString() }
 function render(){
   syncMeta(); const groups=[];
   plan.items.forEach(item=>{ let group=groups.find(x=>x.date===item.date); if(!group){group={date:item.date||"待定日期",items:[]};groups.push(group)} group.items.push(item) });
