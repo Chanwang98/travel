@@ -19,6 +19,20 @@
       "durationMinutes": 82
     },
     {
+      "id": "item-1786620512671",
+      "date": "2026年8月15日 · 周六",
+      "startTime": "11:47",
+      "endTime": "11:48",
+      "linkedPrevious": true,
+      "timeMode": "duration",
+      "durationMinutes": 1,
+      "title": "出站",
+      "location": "南京南出站口",
+      "transport": "步行",
+      "details": "",
+      "note": ""
+    },
+    {
       "id": "item-1786615574090",
       "date": "2026年8月15日 · 周六",
       "startTime": "11:47",
