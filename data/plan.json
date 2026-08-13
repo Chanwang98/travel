@@ -157,6 +157,20 @@
       "transport": "步行",
       "details": "",
       "note": ""
+    },
+    {
+      "id": "item-1786623292449",
+      "date": "2026年8月15日 · 周六",
+      "startTime": "19:00",
+      "endTime": "21:00",
+      "linkedPrevious": true,
+      "timeMode": "fixedEnd",
+      "durationMinutes": 120,
+      "title": "景点游览",
+      "location": "夫子庙+秦淮河",
+      "transport": "步行",
+      "details": "",
+      "note": ""
     }
   ]
 }
