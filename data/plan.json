@@ -283,6 +283,20 @@
       "transport": "打车",
       "details": "",
       "note": ""
+    },
+    {
+      "id": "item-1786623961108",
+      "date": "2026年8月16日 · 周日",
+      "startTime": "12:55",
+      "endTime": "13:55",
+      "linkedPrevious": true,
+      "timeMode": "duration",
+      "durationMinutes": 60,
+      "title": "午餐",
+      "location": "小潘记鸭血粉丝汤",
+      "transport": "步行",
+      "details": "",
+      "note": ""
     }
   ]
 }
