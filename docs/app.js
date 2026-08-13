@@ -2,7 +2,7 @@ const REPO = "Chanwang98/travel";
 const FILE_PATH = "data/plan.json";
 const API = `https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`;
 const transports = ["飞机","高铁","火车","地铁","公交","打车","自驾","骑行","步行","轮渡"];
-const icons = {飞机:"✈",高铁:"⌁",火车:"▰",地铁:"M",公交:"▣",打车:"◆",自驾:"◇",骑行:"◉",步行:"●",轮渡:"≈"};
+const icons = {飞机:"飞",高铁:"铁",火车:"车",地铁:"M",公交:"公",打车:"的",自驾:"驾",骑行:"骑",步行:"步",轮渡:"船"};
 let plan = {title:"我的旅行",destination:"",dateRange:"",companions:"",items:[]};
 let fileSha = null;
 let dragging = null;
@@ -88,14 +88,17 @@ function render(){
   plan.items.forEach(item=>{ let group=groups.find(x=>x.date===item.date); if(!group){group={date:item.date||"待定日期",items:[]};groups.push(group)} group.items.push(item) });
   $("timeline").innerHTML=groups.map(group=>`<section class="day"><div class="day-label">${escapeHtml(group.date)}</div><div class="cards">${group.items.map(cardHtml).join("")}</div></section>`).join("");
   document.querySelectorAll(".card").forEach(card=>{
+    card.draggable=!window.matchMedia("(max-width: 760px)").matches;
     card.addEventListener("dragstart",()=>{dragging=card.dataset.id;card.classList.add("dragging")});
     card.addEventListener("dragend",()=>card.classList.remove("dragging"));
     card.addEventListener("dragover",e=>e.preventDefault()); card.addEventListener("drop",()=>reorder(card.dataset.id));
   });
   document.querySelectorAll(".more").forEach(button=>button.addEventListener("click",()=>openItem(button.dataset.id)));
+  document.querySelectorAll(".move-button").forEach(button=>button.addEventListener("click",()=>moveItem(button.dataset.id,Number(button.dataset.direction))));
 }
-function cardHtml(item){ const status=getItemStatus(item); return `<article class="card status-${status.key}" draggable="true" data-id="${escapeHtml(item.id)}"><button class="handle" aria-label="拖动">⠿</button><div class="time"><strong>${escapeHtml(item.startTime)}</strong><span>${escapeHtml(item.endTime)}</span><mark class="status-badge">${status.label}</mark></div><div class="icon">${icons[item.transport]||"•"}</div><div class="card-main"><div class="title-row"><div><h3>${escapeHtml(item.title)}</h3><p class="location">${escapeHtml(item.location)}</p></div><button class="more" data-id="${escapeHtml(item.id)}" aria-label="编辑">•••</button></div><div class="pill"><span>${escapeHtml(item.transport)}</span><span>·</span><span>${escapeHtml(item.details)}</span><span>·</span><span>${formatDuration(item.durationMinutes)}</span></div>${item.note?`<p class="note">${escapeHtml(item.note)}</p>`:""}</div></article>` }
+function cardHtml(item){ const status=getItemStatus(item); return `<article class="card status-${status.key}" draggable="true" data-id="${escapeHtml(item.id)}"><button class="handle" aria-label="拖动">⠿</button><div class="time"><strong>${escapeHtml(item.startTime)}</strong><span>${escapeHtml(item.endTime)}</span><mark class="status-badge">${status.label}</mark></div><div class="icon" aria-hidden="true">${icons[item.transport]||"行"}</div><div class="card-main"><div class="title-row"><div><h3>${escapeHtml(item.title)}</h3><p class="location">${escapeHtml(item.location)}</p></div><button class="more" data-id="${escapeHtml(item.id)}" aria-label="编辑行程">•••</button></div><div class="pill"><span>${escapeHtml(item.transport)}</span>${item.details?`<span>·</span><span>${escapeHtml(item.details)}</span>`:""}<span>·</span><span>${formatDuration(item.durationMinutes)}</span></div>${item.note?`<p class="note">${escapeHtml(item.note)}</p>`:""}</div><div class="mobile-move" aria-label="调整行程顺序"><button class="move-button" data-id="${escapeHtml(item.id)}" data-direction="-1" aria-label="向上移动">↑</button><button class="move-button" data-id="${escapeHtml(item.id)}" data-direction="1" aria-label="向下移动">↓</button></div></article>` }
 function reorder(target){ if(!dragging||dragging===target)return; const from=plan.items.findIndex(x=>x.id===dragging),to=plan.items.findIndex(x=>x.id===target); const [moved]=plan.items.splice(from,1); plan.items.splice(to,0,moved); recalculateSchedule(Math.min(from,to)); render(); markChanged() }
+function moveItem(id,direction){ const from=plan.items.findIndex(item=>item.id===id),to=from+direction; if(from<0||to<0||to>=plan.items.length)return; [plan.items[from],plan.items[to]]=[plan.items[to],plan.items[from]]; recalculateSchedule(Math.min(from,to)); render(); markChanged() }
 
 function selectedTimeMode(){ return document.querySelector('input[name="timeMode"]:checked').value }
 function previousForItem(id){ const index=plan.items.findIndex(x=>x.id===id); return index>0?plan.items[index-1]:index<0?plan.items.at(-1):null }
