@@ -45,6 +45,9 @@
 .editable-title{width:min(900px,100%);margin:auto;display:flex;align-items:center;justify-content:center;gap:12px}.editable-title span{color:#8fb5df;font-size:22px}.editable-title .title-input{width:min(820px,calc(100% - 34px));margin:0;border-bottom:1px dashed transparent;transition:.2s}.editable-title .title-input:hover,.editable-title .title-input:focus{border-bottom-color:#78ace5;background:#ffffff66}.title-input::placeholder{color:#a8b2bd}.trip-meta label{gap:8px}.trip-meta em{color:#8fb5df;font-size:11px;font-style:normal}.trip-meta input{padding:4px 2px;border-bottom:1px dashed #b9cde2}.trip-meta input:hover,.trip-meta input:focus{border-bottom-color:var(--blue);background:#f1f7ff}.trip-meta input::placeholder{color:#9ca9b5}.edit-reminder{margin-bottom:38px;padding:13px 17px;border:1px solid #dceafb;border-radius:14px;background:#f5f9ff;color:#52779f;font-size:12px;text-align:center}
 .trip-meta input[readonly]{cursor:default;border-bottom-color:transparent;color:#5d6b78}.trip-meta input[readonly]:hover,.trip-meta input[readonly]:focus{border-bottom-color:transparent;background:transparent}
 
+/* Read-only access */
+.button:disabled,.add-row:disabled{cursor:not-allowed;opacity:.42;box-shadow:none}.readonly-mode .more,.readonly-mode .mobile-move,.readonly-mode .handle{display:none!important}.readonly-mode .card{grid-template-columns:76px 45px 1fr}.readonly-mode .title-input,.readonly-mode .trip-meta input{cursor:default}.readonly-mode .edit-reminder{color:#666;background:#f5f5f7;border-color:#e4e4e8}
+
 /* Calendar subscription */
 .save-actions{display:flex;align-items:center;gap:9px}.calendar-dialog{width:min(600px,calc(100% - 32px))}.calendar-ready{margin:-6px 0 20px;padding:15px;display:flex;align-items:center;gap:14px;border:1px solid #e2ebf5;border-radius:17px;background:#f7faff}.calendar-ready strong{font-size:14px}.calendar-ready p{margin:5px 0 0;color:#6e747b;font-size:11px;line-height:1.5}.calendar-symbol{width:46px;height:46px;flex:0 0 46px;display:grid;place-items:center;border-radius:11px;background:linear-gradient(#ff5a52 0 12px,#fff 12px);box-shadow:0 2px 8px #0002;color:#222;font-size:17px;font-weight:650;padding-top:8px}.token-label select{width:100%;border:1px solid #dedee3;border-radius:12px;outline:0;background:#fbfbfc;padding:11px 12px}.calendar-url-label{margin-top:16px}.calendar-url-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}.calendar-url-row input{min-width:0;color:#616167;font-size:11px}.calendar-note{margin:18px 0}.calendar-actions{display:flex;justify-content:flex-end;gap:9px}.calendar-actions .button{white-space:nowrap}
 
@@ -81,8 +84,10 @@
 }
 
 @media(max-width:760px){
-  .save-actions{width:100%;display:grid;grid-template-columns:1fr}.calendar-dialog{width:calc(100% - 20px);padding:18px}.calendar-ready{padding:12px;gap:11px}.calendar-ready p{font-size:10px}.calendar-url-row{grid-template-columns:1fr}.calendar-url-row .button{width:100%}.calendar-actions{padding-bottom:18px;display:grid;grid-template-columns:1fr}.calendar-actions .button{width:100%}
+  .actions #calendarBtn{display:inline-grid!important;order:1;height:38px;padding:0 11px;color:#176fc4;background:#eaf4ff;font-size:11px}.actions .trips-button{order:2}.actions #addBtn{order:3}.actions .sync{order:4}.calendar-dialog{width:calc(100% - 20px);padding:18px}.calendar-ready{padding:12px;gap:11px}.calendar-ready p{font-size:10px}.calendar-url-row{grid-template-columns:1fr}.calendar-url-row .button{width:100%}.calendar-actions{padding-bottom:18px;display:grid;grid-template-columns:1fr}.calendar-actions .button{width:100%}
 }
+
+@media(max-width:760px){.readonly-mode .card{grid-template-columns:54px 38px minmax(0,1fr)}}
 
 @media(max-width:360px){
   .brand>span:last-child{display:none}.actions{width:calc(100% - 42px)}.hero{padding-left:10px;padding-right:10px}.planner{width:calc(100vw - 16px)}.card{grid-template-columns:50px 34px minmax(0,1fr);gap:7px;padding-left:10px;padding-right:9px}.icon{width:34px;height:34px;border-radius:10px;font-size:13px}.trip-meta{padding-left:7px;padding-right:7px}.trip-meta input{font-size:11px}.modal-actions{padding-left:12px;padding-right:12px}.modal-actions .button{font-size:12px}}

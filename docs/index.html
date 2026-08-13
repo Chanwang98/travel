@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#f5f8ff">
   <title>旅迹 · Travel Planner</title>
-  <link rel="stylesheet" href="./styles.css?v=20260813-14">
+  <link rel="stylesheet" href="./styles.css?v=20260813-15">
 </head>
 <body>
   <header class="topbar">
@@ -32,11 +32,11 @@
     </section>
 
     <section class="planner">
-      <div class="edit-reminder">标题、目的地和同行可直接修改；日期会根据行程安排的首尾日期自动生成。</div>
+      <div class="edit-reminder" id="editReminder">标题、目的地和同行可直接修改；日期会根据行程安排的首尾日期自动生成。</div>
       <div class="section-heading"><div><p class="eyebrow">ITINERARY</p><h2>行程安排</h2></div><p>拖动卡片调整顺序 · 修改后点击保存</p></div>
       <div id="timeline"></div>
       <button class="add-row" id="addRowBtn">＋ 添加下一段行程</button>
-      <div class="save-panel"><p>所有旅行计划公开存储于 <a href="https://github.com/Chanwang98/travel/blob/main/data/plans.json" target="_blank" rel="noreferrer">GitHub 仓库</a></p><div class="save-actions"><button class="button ghost large" id="calendarPanelBtn">订阅到 Apple 日历</button><button class="button primary large" id="saveBtn">保存并同步到 GitHub</button></div></div>
+      <div class="save-panel"><p>所有旅行计划公开存储于 <a href="https://github.com/Chanwang98/travel/blob/main/data/plans.json" target="_blank" rel="noreferrer">GitHub 仓库</a></p><button class="button primary large" id="saveBtn">保存并同步到 GitHub</button></div>
     </section>
   </main>
 
@@ -98,6 +98,6 @@
   </dialog>
 
   <div id="toast" role="status"></div>
-  <script src="./app.js?v=20260813-14"></script>
+  <script src="./app.js?v=20260813-15"></script>
 </body>
 </html>
