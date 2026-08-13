@@ -3,5 +3,17 @@
   "destination": "南京",
   "dateRange": "2026.8.15-16",
   "companions": "3",
-  "items": []
+  "items": [
+    {
+      "id": "item-1786615413506",
+      "date": "2026年8月15日 · 周六",
+      "startTime": "10:25",
+      "endTime": "11:47",
+      "title": "交通出行",
+      "location": "上海虹桥—南京南",
+      "transport": "高铁",
+      "details": "G676",
+      "note": ""
+    }
+  ]
 }
