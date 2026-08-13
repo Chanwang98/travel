@@ -31,6 +31,18 @@ function parseItemDate(dateText, now=new Date()){
   if(distance<-(1000*60*60*24*180))year+=1;
   return {year,month,day};
 }
+function toDateInputValue(dateText){
+  const parsed=parseItemDate(dateText); if(!parsed)return "";
+  return `${parsed.year}-${String(parsed.month).padStart(2,"0")}-${String(parsed.day).padStart(2,"0")}`;
+}
+function formatDateWithWeekday(value){
+  if(!value)return ""; const [year,month,day]=value.split("-").map(Number); const date=new Date(year,month-1,day);
+  const weekday=new Intl.DateTimeFormat("zh-CN",{weekday:"short"}).format(date);
+  return `${year}年${month}月${day}日 · ${weekday}`;
+}
+function updateWeekday(){
+  const value=$("itemDate").value; $("weekdayOutput").textContent=value?formatDateWithWeekday(value).split(" · ")[1]:"请选择日期";
+}
 function getItemStatus(item,now=new Date()){
   const date=parseItemDate(item.date,now); if(!date)return {key:"unknown",label:"日期待完善"};
   const toDate=(time,fallback)=>{const parts=String(time||fallback).split(":").map(Number);return new Date(date.year,date.month-1,date.day,parts[0]||0,parts[1]||0,0)};
@@ -68,10 +80,10 @@ function reorder(target){ if(!dragging||dragging===target)return; const from=pla
 
 function openItem(id){
   const item=plan.items.find(x=>x.id===id)||{id:`item-${Date.now()}`,date:"",startTime:"09:00",endTime:"10:00",title:"",location:"",transport:"步行",details:"",note:""};
-  $("modalTitle").textContent=id?"编辑行程":"新增行程"; $("itemId").value=item.id; $("itemDate").value=item.date; $("startTime").value=item.startTime; $("endTime").value=item.endTime; $("itemTitle").value=item.title; $("location").value=item.location; $("transport").value=item.transport; $("details").value=item.details; $("note").value=item.note; $("deleteBtn").style.visibility=id?"visible":"hidden"; $("itemDialog").showModal();
+  $("modalTitle").textContent=id?"编辑行程":"新增行程"; $("itemId").value=item.id; $("itemDate").value=toDateInputValue(item.date); updateWeekday(); $("startTime").value=item.startTime; $("endTime").value=item.endTime; $("itemTitle").value=item.title; $("location").value=item.location; $("transport").value=item.transport; $("details").value=item.details; $("note").value=item.note; $("deleteBtn").style.visibility=id?"visible":"hidden"; $("itemDialog").showModal();
 }
 function saveItem(event){
-  event.preventDefault(); const item={id:$("itemId").value,date:$("itemDate").value,startTime:$("startTime").value,endTime:$("endTime").value,title:$("itemTitle").value.trim(),location:$("location").value.trim(),transport:$("transport").value,details:$("details").value.trim(),note:$("note").value.trim()}; const index=plan.items.findIndex(x=>x.id===item.id); if(index>=0)plan.items[index]=item;else plan.items.push(item); $("itemDialog").close();render();markChanged();
+  event.preventDefault(); const item={id:$("itemId").value,date:formatDateWithWeekday($("itemDate").value),startTime:$("startTime").value,endTime:$("endTime").value,title:$("itemTitle").value.trim(),location:$("location").value.trim(),transport:$("transport").value,details:$("details").value.trim(),note:$("note").value.trim()}; const index=plan.items.findIndex(x=>x.id===item.id); if(index>=0)plan.items[index]=item;else plan.items.push(item); $("itemDialog").close();render();markChanged();
 }
 
 async function saveToGithub(){
@@ -87,6 +99,7 @@ function exportWord(){ collectMeta(); const rows=plan.items.map(x=>`<tr><td>${es
 transports.forEach(value=>$("transport").add(new Option(value,value)));
 fields.forEach(id=>$(id).addEventListener("input",()=>{collectMeta();markChanged()}));
 $("addBtn").onclick=$("addRowBtn").onclick=()=>openItem(); $("itemForm").onsubmit=saveItem; $("saveBtn").onclick=saveToGithub; $("pdfBtn").onclick=()=>window.print(); $("wordBtn").onclick=exportWord;
+$("itemDate").addEventListener("change",updateWeekday);
 $("deleteBtn").onclick=()=>{plan.items=plan.items.filter(x=>x.id!==$("itemId").value);$("itemDialog").close();render();markChanged()};
 $("settingsBtn").onclick=()=>{$("tokenInput").value=token();$("settingsDialog").showModal()};
 $("settingsForm").onsubmit=e=>{e.preventDefault();localStorage.setItem("travelGithubToken",$("tokenInput").value.trim());$("settingsDialog").close();toast("令牌已保存在本机");loadPlan()};
