@@ -6,6 +6,8 @@ const icons = {飞机:"✈",高铁:"⌁",火车:"▰",地铁:"M",公交:"▣",�
 let plan = {title:"我的旅行",destination:"",dateRange:"",companions:"",items:[]};
 let fileSha = null;
 let dragging = null;
+let dirty = false;
+let saving = false;
 
 const $ = (id) => document.getElementById(id);
 const fields = ["planTitle","destination","dateRange","companions"];
@@ -17,7 +19,7 @@ function encodeBase64(value){ const bytes=new TextEncoder().encode(value); let b
 function escapeHtml(value=""){ return String(value).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c])) }
 function setStatus(text,type=""){ $("syncStatus").className=`sync ${type}`; $("syncStatus").innerHTML=`<i></i>${escapeHtml(text)}` }
 function toast(text){ const node=$("toast"); node.textContent=text; node.classList.add("show"); setTimeout(()=>node.classList.remove("show"),2400) }
-function markChanged(){ setStatus("有未同步修改") }
+function markChanged(){ dirty=true; setStatus(token()?"有修改 · 30秒内自动同步":"有修改 · 请设置同步") }
 
 function parseItemDate(dateText, now=new Date()){
   const normalized=String(dateText||"").trim();
@@ -56,7 +58,7 @@ async function loadPlan(){
   try{
     const response=await fetch(`${API}?ref=main&t=${Date.now()}`,{headers:headers(Boolean(token()))});
     if(!response.ok) throw new Error(`GitHub 返回 ${response.status}`);
-    const result=await response.json(); fileSha=result.sha; plan=JSON.parse(decodeBase64(result.content)); render(); setStatus("已与 GitHub 同步","ok");
+    const result=await response.json(); fileSha=result.sha; plan=JSON.parse(decodeBase64(result.content)); dirty=false; render(); setStatus("已与 GitHub 同步","ok");
   }catch(error){ setStatus("读取失败","error"); toast(error.message) }
 }
 
@@ -86,13 +88,19 @@ function saveItem(event){
   event.preventDefault(); const item={id:$("itemId").value,date:formatDateWithWeekday($("itemDate").value),startTime:$("startTime").value,endTime:$("endTime").value,title:$("itemTitle").value.trim(),location:$("location").value.trim(),transport:$("transport").value,details:$("details").value.trim(),note:$("note").value.trim()}; const index=plan.items.findIndex(x=>x.id===item.id); if(index>=0)plan.items[index]=item;else plan.items.push(item); $("itemDialog").close();render();markChanged();
 }
 
-async function saveToGithub(){
-  collectMeta(); if(!token()){ $("settingsDialog").showModal();toast("请先设置 GitHub 令牌");return }
-  setStatus("正在提交到 GitHub…"); $("saveBtn").disabled=true;
+async function saveToGithub(options={}){
+  const automatic=Boolean(options.automatic); collectMeta();
+  if(saving||(!dirty&&automatic))return;
+  if(!token()){
+    setStatus("未同步 · 需要设置","error");
+    if(!automatic){$("settingsDialog").showModal();toast("请先设置 GitHub 令牌")}
+    return;
+  }
+  saving=true; setStatus(automatic?"正在自动同步…":"正在提交到 GitHub…"); $("saveBtn").disabled=true;
   try{
     const response=await fetch(API,{method:"PUT",headers:{...headers(true),"Content-Type":"application/json"},body:JSON.stringify({message:`Update travel plan ${new Date().toLocaleString("zh-CN")}`,content:encodeBase64(JSON.stringify(plan,null,2)),sha:fileSha,branch:"main"})});
-    const result=await response.json(); if(!response.ok)throw new Error(result.message||`保存失败 ${response.status}`); fileSha=result.content.sha;setStatus("已与 GitHub 同步","ok");toast("所有设备均可读取最新行程");
-  }catch(error){setStatus("保存失败","error");toast(error.message)}finally{$("saveBtn").disabled=false}
+    const result=await response.json(); if(!response.ok)throw new Error(result.message||`保存失败 ${response.status}`); fileSha=result.content.sha;dirty=false;setStatus("已与 GitHub 同步","ok");if(!automatic)toast("所有设备均可读取最新行程");
+  }catch(error){setStatus("同步失败 · 点击重试","error");if(!automatic)toast(error.message)}finally{saving=false;$("saveBtn").disabled=false}
 }
 function exportWord(){ collectMeta(); const rows=plan.items.map(x=>`<tr><td>${escapeHtml(x.date)}</td><td>${escapeHtml(x.startTime)}–${escapeHtml(x.endTime)}</td><td>${escapeHtml(x.title)}<br>${escapeHtml(x.location)}</td><td>${escapeHtml(x.transport)}<br>${escapeHtml(x.details)}</td><td>${escapeHtml(x.note)}</td></tr>`).join(""); const html=`<meta charset="utf-8"><h1>${escapeHtml(plan.title)}</h1><table border="1" cellpadding="8"><tr><th>日期</th><th>时间</th><th>行程</th><th>交通</th><th>备注</th></tr>${rows}</table>`;const url=URL.createObjectURL(new Blob(["\ufeff",html],{type:"application/msword"}));const a=document.createElement("a");a.href=url;a.download=`${plan.title}.doc`;a.click();URL.revokeObjectURL(url) }
 
@@ -102,8 +110,10 @@ $("addBtn").onclick=$("addRowBtn").onclick=()=>openItem(); $("itemForm").onsubmi
 $("itemDate").addEventListener("change",updateWeekday);
 $("deleteBtn").onclick=()=>{plan.items=plan.items.filter(x=>x.id!==$("itemId").value);$("itemDialog").close();render();markChanged()};
 $("settingsBtn").onclick=()=>{$("tokenInput").value=token();$("settingsDialog").showModal()};
+$("syncStatus").onclick=()=>{if(dirty)saveToGithub()};
 $("settingsForm").onsubmit=e=>{e.preventDefault();localStorage.setItem("travelGithubToken",$("tokenInput").value.trim());$("settingsDialog").close();toast("令牌已保存在本机");loadPlan()};
 $("clearTokenBtn").onclick=()=>{localStorage.removeItem("travelGithubToken");$("tokenInput").value="";toast("本机令牌已清除")};
 document.querySelectorAll("[data-close]").forEach(button=>button.onclick=()=>$(button.dataset.close).close());
 loadPlan();
 setInterval(()=>render(),60000);
+setInterval(()=>saveToGithub({automatic:true}),30000);
