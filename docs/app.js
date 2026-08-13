@@ -45,6 +45,23 @@ function formatDateWithWeekday(value){
 function updateWeekday(){
   const value=$("itemDate").value; $("weekdayOutput").textContent=value?formatDateWithWeekday(value).split(" · ")[1]:"请选择日期";
 }
+function timeToMinutes(value){ const [hours,minutes]=String(value||"00:00").split(":").map(Number); return (hours||0)*60+(minutes||0) }
+function minutesToTime(value){ const normalized=((Number(value)||0)%1440+1440)%1440; return `${String(Math.floor(normalized/60)).padStart(2,"0")}:${String(normalized%60).padStart(2,"0")}` }
+function durationBetween(start,end){ let value=timeToMinutes(end)-timeToMinutes(start); if(value<=0)value+=1440; return value }
+function formatDuration(value){ const minutes=Math.max(0,Math.round(Number(value)||0)); if(minutes<60)return `${minutes}分钟`; const hours=Math.floor(minutes/60),rest=minutes%60; return `${hours}小时${rest?`${rest}分钟`:""}` }
+function normalizedItem(item){
+  const duration=Math.max(1,Number(item.durationMinutes)||durationBetween(item.startTime,item.endTime));
+  return {...item,linkedPrevious:Boolean(item.linkedPrevious),timeMode:item.timeMode==="fixedEnd"?"fixedEnd":"duration",durationMinutes:duration};
+}
+function recalculateSchedule(fromIndex=0){
+  plan.items=plan.items.map(normalizedItem);
+  for(let index=Math.max(0,fromIndex);index<plan.items.length;index+=1){
+    const item=plan.items[index],previous=plan.items[index-1];
+    if(item.linkedPrevious&&previous)item.startTime=previous.endTime;
+    if(item.timeMode==="fixedEnd")item.durationMinutes=durationBetween(item.startTime,item.endTime);
+    else item.endTime=minutesToTime(timeToMinutes(item.startTime)+item.durationMinutes);
+  }
+}
 function getItemStatus(item,now=new Date()){
   const date=parseItemDate(item.date,now); if(!date)return {key:"unknown",label:"日期待完善"};
   const toDate=(time,fallback)=>{const parts=String(time||fallback).split(":").map(Number);return new Date(date.year,date.month-1,date.day,parts[0]||0,parts[1]||0,0)};
@@ -58,7 +75,7 @@ async function loadPlan(){
   try{
     const response=await fetch(`${API}?ref=main&t=${Date.now()}`,{headers:headers(Boolean(token()))});
     if(!response.ok) throw new Error(`GitHub 返回 ${response.status}`);
-    const result=await response.json(); fileSha=result.sha; plan=JSON.parse(decodeBase64(result.content)); dirty=false; render(); setStatus("已与 GitHub 同步","ok");
+    const result=await response.json(); fileSha=result.sha; plan=JSON.parse(decodeBase64(result.content)); plan.items=(plan.items||[]).map(normalizedItem); dirty=false; render(); setStatus("已与 GitHub 同步","ok");
   }catch(error){ setStatus("读取失败","error"); toast(error.message) }
 }
 
@@ -77,15 +94,30 @@ function render(){
   });
   document.querySelectorAll(".more").forEach(button=>button.addEventListener("click",()=>openItem(button.dataset.id)));
 }
-function cardHtml(item){ const status=getItemStatus(item); return `<article class="card status-${status.key}" draggable="true" data-id="${escapeHtml(item.id)}"><button class="handle" aria-label="拖动">⠿</button><div class="time"><strong>${escapeHtml(item.startTime)}</strong><span>${escapeHtml(item.endTime)}</span><mark class="status-badge">${status.label}</mark></div><div class="icon">${icons[item.transport]||"•"}</div><div class="card-main"><div class="title-row"><div><h3>${escapeHtml(item.title)}</h3><p class="location">${escapeHtml(item.location)}</p></div><button class="more" data-id="${escapeHtml(item.id)}" aria-label="编辑">•••</button></div><div class="pill"><span>${escapeHtml(item.transport)}</span><span>·</span><span>${escapeHtml(item.details)}</span></div>${item.note?`<p class="note">${escapeHtml(item.note)}</p>`:""}</div></article>` }
-function reorder(target){ if(!dragging||dragging===target)return; const from=plan.items.findIndex(x=>x.id===dragging),to=plan.items.findIndex(x=>x.id===target); const [moved]=plan.items.splice(from,1); plan.items.splice(to,0,moved); render(); markChanged() }
+function cardHtml(item){ const status=getItemStatus(item); return `<article class="card status-${status.key}" draggable="true" data-id="${escapeHtml(item.id)}"><button class="handle" aria-label="拖动">⠿</button><div class="time"><strong>${escapeHtml(item.startTime)}</strong><span>${escapeHtml(item.endTime)}</span><mark class="status-badge">${status.label}</mark></div><div class="icon">${icons[item.transport]||"•"}</div><div class="card-main"><div class="title-row"><div><h3>${escapeHtml(item.title)}</h3><p class="location">${escapeHtml(item.location)}</p></div><button class="more" data-id="${escapeHtml(item.id)}" aria-label="编辑">•••</button></div><div class="pill"><span>${escapeHtml(item.transport)}</span><span>·</span><span>${escapeHtml(item.details)}</span><span>·</span><span>${formatDuration(item.durationMinutes)}</span></div>${item.note?`<p class="note">${escapeHtml(item.note)}</p>`:""}</div></article>` }
+function reorder(target){ if(!dragging||dragging===target)return; const from=plan.items.findIndex(x=>x.id===dragging),to=plan.items.findIndex(x=>x.id===target); const [moved]=plan.items.splice(from,1); plan.items.splice(to,0,moved); recalculateSchedule(Math.min(from,to)); render(); markChanged() }
+
+function selectedTimeMode(){ return document.querySelector('input[name="timeMode"]:checked').value }
+function previousForItem(id){ const index=plan.items.findIndex(x=>x.id===id); return index>0?plan.items[index-1]:index<0?plan.items.at(-1):null }
+function updateTimeForm(){
+  const previous=previousForItem($("itemId").value),linked=$("linkedPrevious").checked,mode=selectedTimeMode();
+  $("linkedPrevious").disabled=!previous; if(!previous)$("linkedPrevious").checked=false;
+  $("linkHint").textContent=previous?`开始时间将使用上一行程结束时间 ${previous.endTime}`:"当前没有可衔接的上一行程";
+  $("startTime").readOnly=Boolean(previous&&linked); if(previous&&linked)$("startTime").value=previous.endTime;
+  $("durationMinutes").disabled=mode==="fixedEnd"; $("durationMinutes").required=mode==="duration"; $("endTime").readOnly=mode==="duration";
+  if(mode==="duration"){
+    const duration=Math.max(1,Number($("durationMinutes").value)||60); $("durationMinutes").value=duration; $("endTime").value=minutesToTime(timeToMinutes($("startTime").value)+duration);
+  }else $("durationMinutes").value=durationBetween($("startTime").value,$("endTime").value);
+  $("durationOutput").textContent=formatDuration($("durationMinutes").value);
+}
 
 function openItem(id){
-  const item=plan.items.find(x=>x.id===id)||{id:`item-${Date.now()}`,date:"",startTime:"09:00",endTime:"10:00",title:"",location:"",transport:"步行",details:"",note:""};
-  $("modalTitle").textContent=id?"编辑行程":"新增行程"; $("itemId").value=item.id; $("itemDate").value=toDateInputValue(item.date); updateWeekday(); $("startTime").value=item.startTime; $("endTime").value=item.endTime; $("itemTitle").value=item.title; $("location").value=item.location; $("transport").value=item.transport; $("details").value=item.details; $("note").value=item.note; $("deleteBtn").style.visibility=id?"visible":"hidden"; $("itemDialog").showModal();
+  const previous=id?previousForItem(id):plan.items.at(-1); const fallbackStart=previous?.endTime||"09:00";
+  const item=normalizedItem(plan.items.find(x=>x.id===id)||{id:`item-${Date.now()}`,date:previous?.date||"",startTime:fallbackStart,endTime:minutesToTime(timeToMinutes(fallbackStart)+60),linkedPrevious:Boolean(previous),timeMode:"duration",durationMinutes:60,title:"",location:"",transport:"步行",details:"",note:""});
+  $("modalTitle").textContent=id?"编辑行程":"新增行程"; $("itemId").value=item.id; $("itemDate").value=toDateInputValue(item.date); updateWeekday(); $("linkedPrevious").checked=item.linkedPrevious; $("startTime").value=item.startTime; $("endTime").value=item.endTime; document.querySelector(`input[name="timeMode"][value="${item.timeMode}"]`).checked=true; $("durationMinutes").value=item.durationMinutes; $("itemTitle").value=item.title; $("location").value=item.location; $("transport").value=item.transport; $("details").value=item.details; $("note").value=item.note; $("deleteBtn").style.visibility=id?"visible":"hidden"; updateTimeForm(); $("itemDialog").showModal();
 }
 function saveItem(event){
-  event.preventDefault(); const item={id:$("itemId").value,date:formatDateWithWeekday($("itemDate").value),startTime:$("startTime").value,endTime:$("endTime").value,title:$("itemTitle").value.trim(),location:$("location").value.trim(),transport:$("transport").value,details:$("details").value.trim(),note:$("note").value.trim()}; const index=plan.items.findIndex(x=>x.id===item.id); if(index>=0)plan.items[index]=item;else plan.items.push(item); $("itemDialog").close();render();markChanged();
+  event.preventDefault(); updateTimeForm(); const item={id:$("itemId").value,date:formatDateWithWeekday($("itemDate").value),startTime:$("startTime").value,endTime:$("endTime").value,linkedPrevious:$("linkedPrevious").checked,timeMode:selectedTimeMode(),durationMinutes:Math.max(1,Number($("durationMinutes").value)||1),title:$("itemTitle").value.trim(),location:$("location").value.trim(),transport:$("transport").value,details:$("details").value.trim(),note:$("note").value.trim()}; const index=plan.items.findIndex(x=>x.id===item.id); if(index>=0)plan.items[index]=item;else plan.items.push(item); recalculateSchedule(index>=0?index:plan.items.length-1); $("itemDialog").close();render();markChanged();
 }
 
 async function saveToGithub(options={}){
@@ -108,7 +140,9 @@ transports.forEach(value=>$("transport").add(new Option(value,value)));
 fields.forEach(id=>$(id).addEventListener("input",()=>{collectMeta();markChanged()}));
 $("addBtn").onclick=$("addRowBtn").onclick=()=>openItem(); $("itemForm").onsubmit=saveItem; $("saveBtn").onclick=saveToGithub; $("pdfBtn").onclick=()=>window.print(); $("wordBtn").onclick=exportWord;
 $("itemDate").addEventListener("change",updateWeekday);
-$("deleteBtn").onclick=()=>{plan.items=plan.items.filter(x=>x.id!==$("itemId").value);$("itemDialog").close();render();markChanged()};
+["linkedPrevious","startTime","endTime","durationMinutes"].forEach(id=>$(id).addEventListener("input",updateTimeForm));
+document.querySelectorAll('input[name="timeMode"]').forEach(input=>input.addEventListener("change",updateTimeForm));
+$("deleteBtn").onclick=()=>{const index=plan.items.findIndex(x=>x.id===$("itemId").value);plan.items=plan.items.filter(x=>x.id!==$("itemId").value);recalculateSchedule(Math.max(0,index));$("itemDialog").close();render();markChanged()};
 $("settingsBtn").onclick=()=>{$("tokenInput").value=token();$("settingsDialog").showModal()};
 $("syncStatus").onclick=()=>{if(dirty)saveToGithub()};
 $("settingsForm").onsubmit=e=>{e.preventDefault();localStorage.setItem("travelGithubToken",$("tokenInput").value.trim());$("settingsDialog").close();toast("令牌已保存在本机");loadPlan()};
