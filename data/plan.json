@@ -115,6 +115,20 @@
       "transport": "步行",
       "details": "",
       "note": ""
+    },
+    {
+      "id": "item-1786623107196",
+      "date": "2026年8月15日 · 周六",
+      "startTime": "16:30",
+      "endTime": "16:50",
+      "linkedPrevious": true,
+      "timeMode": "duration",
+      "durationMinutes": 20,
+      "title": "城市漫步",
+      "location": "老门东——徐家鸭子店(夫子庙店)",
+      "transport": "步行",
+      "details": "",
+      "note": ""
     }
   ]
 }
