@@ -129,6 +129,20 @@
       "transport": "步行",
       "details": "",
       "note": ""
+    },
+    {
+      "id": "item-1786623153368",
+      "date": "2026年8月15日 · 周六",
+      "startTime": "16:50",
+      "endTime": "17:00",
+      "linkedPrevious": true,
+      "timeMode": "duration",
+      "durationMinutes": 10,
+      "title": "城市漫步",
+      "location": "徐家鸭子店(夫子庙店)——金陵家宴·金陵春.南京菜(夫子庙店)",
+      "transport": "步行",
+      "details": "",
+      "note": ""
     }
   ]
 }
