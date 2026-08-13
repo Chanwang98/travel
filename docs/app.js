@@ -1,7 +1,13 @@
 const REPO = "Chanwang98/travel";
 const FILE_PATH = "data/plan.json";
 const API = `https://api.github.com/repos/${REPO}/contents/${FILE_PATH}`;
-const transports = ["飞机","高铁","火车","地铁","公交","打车","自驾","骑行","步行","轮渡"];
+const typeGroups = {
+  "交通出行":["飞机","高铁","火车","地铁","公交","打车","自驾","骑行","步行","轮渡"],
+  "餐饮休闲":["早餐","午餐","晚餐","下午茶","夜宵","咖啡","酒吧"],
+  "住宿休息":["入住","退房","睡觉","休息","温泉 / SPA"],
+  "游玩活动":["景点","博物馆","城市漫步","拍照","购物","演出","自由活动"],
+  "其他事项":["集合","行李寄存","取票 / 安检","候机 / 候车","其他"]
+};
 const titleSuggestions = ["出发","交通出行","乘车 / 换乘","抵达目的地","前往酒店","办理入住","行李寄存","取票 / 安检","候机 / 候车","酒店休息","酒店早餐","早餐","午餐","下午茶","晚餐","夜宵","前往景点","景点游览","博物馆参观","城市漫步","拍照打卡","看日出","看日落","购物","咖啡休息","温泉 / SPA","自由活动","集合","演出 / 活动","酒吧 / 夜生活","返回酒店","办理退房","前往车站 / 机场","返程"];
 const iconPaths = {
   飞机:'<path d="M3 11.5 21 4l-5.5 7 4.5 2-2 2-5-1.5-3.5 4.5-2 .5 1.5-6L3 11.5Z"/>',
@@ -13,7 +19,31 @@ const iconPaths = {
   自驾:'<path d="m4 12 2-6h12l2 6v6H4zM7 15h.01M17 15h.01M6 18v2M18 18v2M6 10h12"/>',
   骑行:'<circle cx="6" cy="17" r="3"/><circle cx="18" cy="17" r="3"/><circle cx="13" cy="5" r="2"/><path d="m9 17 3-6 3 3h3M9 17l-2-6h5l3 6"/>',
   步行:'<circle cx="13" cy="4" r="2"/><path d="m10 21 1-6-3-3 2-5 4 3 3 1M11 15l5 6M8 12l-3 3"/>',
-  轮渡:'<path d="m3 17 3 2 3-2 3 2 3-2 3 2 3-2M5 14l2-7h10l2 7M8 7V4h8v3M7 11h10"/>'
+  轮渡:'<path d="m3 17 3 2 3-2 3 2 3-2 3 2 3-2M5 14l2-7h10l2 7M8 7V4h8v3M7 11h10"/>',
+  早餐:'<path d="M5 11h14v2a7 7 0 0 1-14 0v-2ZM4 20h16M8 8V5M12 8V4M16 8V5"/>',
+  午餐:'<circle cx="12" cy="12" r="7"/><path d="M3 5v6M5 5v6M4 11v8M20 5v14M20 5c-3 2-3 6 0 7"/>',
+  晚餐:'<path d="M4 13h16M6 13a6 6 0 0 1 12 0M12 7V4M4 19h16"/>',
+  下午茶:'<path d="M5 8h12v5a5 5 0 0 1-5 5H10a5 5 0 0 1-5-5V8ZM17 10h2a2 2 0 0 1 0 4h-2M7 4c0 1 1 1 1 2M12 4c0 1 1 1 1 2"/>',
+  夜宵:'<path d="M5 12h14v1a7 7 0 0 1-14 0v-1ZM4 20h16M17 4a5 5 0 0 0 3 7 5 5 0 0 1-3-7Z"/>',
+  咖啡:'<path d="M5 8h12v5a5 5 0 0 1-5 5H10a5 5 0 0 1-5-5V8ZM17 10h2a2 2 0 0 1 0 4h-2M4 21h15"/>',
+  酒吧:'<path d="M5 4h14l-6 8v7M9 20h8M7 7h10"/>',
+  入住:'<path d="M4 19V9h16v10M4 14h16M7 9V6h5a3 3 0 0 1 3 3M7 17h.01"/>',
+  退房:'<path d="M4 19V9h12v10M4 14h12M7 9V6h4a3 3 0 0 1 3 3M18 8l3 3-3 3M16 11h5"/>',
+  睡觉:'<path d="M4 18V8M4 14h16v4M7 14V9h5a4 4 0 0 1 4 4v1M18 5h3l-3 3h3"/>',
+  休息:'<path d="M5 18h14M7 18l1-8h8l1 8M9 10V6h6v4"/>',
+  '温泉 / SPA':'<path d="M4 15c2-2 4 2 6 0s4 2 6 0 4 2 4 2M7 11c-2-2 2-3 0-5M12 11c-2-2 2-3 0-5M17 11c-2-2 2-3 0-5"/>',
+  景点:'<path d="M5 20h14M7 20V9l5-5 5 5v11M10 20v-5h4v5M9 10h.01M15 10h.01"/>',
+  博物馆:'<path d="m3 9 9-5 9 5M5 10h14M6 10v8M10 10v8M14 10v8M18 10v8M4 20h16"/>',
+  城市漫步:'<circle cx="13" cy="4" r="2"/><path d="m10 21 1-6-3-3 2-5 4 3 3 1M11 15l5 6M8 12l-3 3"/>',
+  拍照:'<path d="M4 8h4l2-3h4l2 3h4v11H4z"/><circle cx="12" cy="13" r="3"/>',
+  购物:'<path d="M5 8h14l-1 12H6L5 8ZM9 9V6a3 3 0 0 1 6 0v3"/>',
+  演出:'<path d="M8 18V6l11-2v12M8 10l11-2"/><circle cx="5" cy="18" r="3"/><circle cx="16" cy="16" r="3"/>',
+  自由活动:'<path d="M12 3v18M3 12h18M6 6l12 12M18 6 6 18"/>',
+  集合:'<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2"/><path d="M3 20c0-4 2-6 6-6s6 2 6 6M15 15c3 0 5 2 5 5"/>',
+  行李寄存:'<rect x="5" y="7" width="14" height="13" rx="2"/><path d="M9 7V5h6v2M9 11v5M15 11v5"/>',
+  '取票 / 安检':'<path d="M5 5h14v5a2 2 0 0 0 0 4v5H5v-5a2 2 0 0 0 0-4V5ZM12 8v8"/>',
+  '候机 / 候车':'<path d="M6 18h12M8 18v-6h8v6M9 12V8h6v4M12 8V4M9 4h6"/>',
+  其他:'<circle cx="12" cy="12" r="9"/><circle cx="8" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="16" cy="12" r="1"/>'
 };
 function transportIcon(name){ return `<svg viewBox="0 0 24 24" aria-hidden="true">${iconPaths[name]||'<circle cx="12" cy="12" r="7"/><path d="M12 8v8M8 12h8"/>'}</svg>` }
 let plan = {title:"我的旅行",destination:"",dateRange:"",companions:"",items:[]};
@@ -164,7 +194,7 @@ async function saveToGithub(options={}){
 }
 function exportWord(){ collectMeta(); const rows=plan.items.map(x=>`<tr><td>${escapeHtml(x.date)}</td><td>${escapeHtml(x.startTime)}–${escapeHtml(x.endTime)}</td><td>${escapeHtml(x.title)}<br>${escapeHtml(x.location)}</td><td>${escapeHtml(x.transport)}<br>${escapeHtml(x.details)}</td><td>${escapeHtml(x.note)}</td></tr>`).join(""); const html=`<meta charset="utf-8"><h1>${escapeHtml(plan.title)}</h1><table border="1" cellpadding="8"><tr><th>日期</th><th>时间</th><th>行程</th><th>交通</th><th>备注</th></tr>${rows}</table>`;const url=URL.createObjectURL(new Blob(["\ufeff",html],{type:"application/msword"}));const a=document.createElement("a");a.href=url;a.download=`${plan.title}.doc`;a.click();URL.revokeObjectURL(url) }
 
-transports.forEach(value=>$("transport").add(new Option(value,value)));
+Object.entries(typeGroups).forEach(([label,values])=>{const group=document.createElement("optgroup");group.label=label;values.forEach(value=>group.append(new Option(value,value)));$("transport").append(group)});
 fields.forEach(id=>$(id).addEventListener("input",()=>{collectMeta();markChanged()}));
 $("addBtn").onclick=$("addRowBtn").onclick=()=>openItem(); $("itemForm").onsubmit=saveItem; $("saveBtn").onclick=saveToGithub; $("pdfBtn").onclick=()=>window.print(); $("wordBtn").onclick=exportWord;
 $("itemDate").addEventListener("change",updateWeekday);
