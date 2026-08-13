@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#f5f8ff">
   <title>旅迹 · Travel Planner</title>
-  <link rel="stylesheet" href="./styles.css?v=20260813-4">
+  <link rel="stylesheet" href="./styles.css?v=20260813-5">
 </head>
 <body>
   <header class="topbar">
@@ -48,18 +48,18 @@
       <div class="form-section"><h3>时间安排</h3><div class="form-grid">
         <label class="wide"><span>日期</span><div class="date-picker-row"><input id="itemDate" type="date" required><output id="weekdayOutput">请选择日期</output></div></label>
         <label class="wide link-option"><input id="linkedPrevious" type="checkbox"><span><strong>衔接上一行程</strong><small id="linkHint">开始时间将自动使用上一行程的结束时间</small></span></label>
-        <label id="startTimeField"><span>开始时间</span><input id="startTime" type="time" required></label>
         <fieldset class="wide time-mode"><legend>计算方式</legend><label><input type="radio" name="timeMode" value="duration" checked><span>固定时长</span></label><label><input type="radio" name="timeMode" value="fixedEnd"><span>固定结束时间</span></label></fieldset>
+        <label id="startTimeField"><span>开始</span><input id="startTime" type="time" required></label>
         <label id="durationField"><span>总时长（分钟）</span><input id="durationMinutes" type="number" min="1" step="1" inputmode="numeric" required></label>
-        <label id="endTimeField"><span>结束时间</span><input id="endTime" type="time" required></label>
+        <label id="endTimeField"><span>结束</span><input id="endTime" type="time" required></label>
         <div class="wide duration-summary">计算结果：<output id="durationOutput">1小时</output></div>
       </div></div>
       <div class="form-section"><h3>行程信息</h3><div class="form-grid">
         <label class="wide"><span>行程名称</span><div class="editable-select"><input id="itemTitle" required autocomplete="off" placeholder="选择常用名称，或直接输入"><button type="button" id="titleMenuBtn" aria-label="选择常用行程名称" aria-expanded="false">⌄</button><div id="titleMenu" class="suggestion-menu" role="listbox" hidden></div></div><small class="field-help">可选择常用名称，也可自由修改</small></label>
         <label class="wide"><span>地点 / 路线</span><input id="location" placeholder="出发地 → 目的地，或景点地址"></label>
-        <label><span>交通方式</span><select id="transport"></select></label>
-        <label><span>交通详情</span><input id="details" placeholder="车次、座位、地铁线、费用"></label>
-        <label class="wide"><span>行程备注</span><textarea id="note" rows="3" placeholder="入口/出口、集合点、预订信息、注意事项……"></textarea></label>
+        <label id="transportField"><span>交通方式</span><select id="transport"></select></label>
+        <label id="detailsField"><span>交通详情</span><input id="details" placeholder="车次、座位、地铁线、费用"></label>
+        <label class="wide"><span>行程备注</span><textarea id="note" rows="2" placeholder="入口/出口、集合点、预订信息、注意事项……"></textarea></label>
       </div>
       </div>
       <div class="modal-actions"><button type="button" class="delete" id="deleteBtn">删除行程</button><span></span><button type="button" class="button ghost" data-close="itemDialog">取消</button><button type="submit" class="button primary">保存行程</button></div>
@@ -76,6 +76,6 @@
   </dialog>
 
   <div id="toast" role="status"></div>
-  <script src="./app.js?v=20260813-4"></script>
+  <script src="./app.js?v=20260813-5"></script>
 </body>
 </html>
