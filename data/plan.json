@@ -14,6 +14,17 @@
       "transport": "高铁",
       "details": "G676",
       "note": ""
+    },
+    {
+      "id": "item-1786615574090",
+      "date": "2026年8月15日 · 周六",
+      "startTime": "11:47",
+      "endTime": "12:20",
+      "title": "交通出行",
+      "location": "南京南—酒店",
+      "transport": "地铁",
+      "details": "3 号线",
+      "note": ""
     }
   ]
 }
