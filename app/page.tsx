@@ -19,7 +19,11 @@ const samplePlan: Plan = {
   ],
 };
 
-const emptyItem = (): ItineraryItem => ({ id: crypto.randomUUID(), date: "", startTime: "09:00", endTime: "10:00", title: "", location: "", transport: "步行", details: "", note: "" });
+const emptyItem = (): ItineraryItem => ({ id: `item-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, date: "", startTime: "09:00", endTime: "10:00", title: "", location: "", transport: "步行", details: "", note: "" });
+
+function escapeHtml(value: string) {
+  return value.replace(/[&<>"']/g, (character) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" })[character] ?? character);
+}
 
 export default function Home() {
   const [plan, setPlan] = useState<Plan>(samplePlan);
@@ -68,8 +72,8 @@ export default function Home() {
     setPlan((current) => { const items = [...current.items]; const from = items.findIndex((item) => item.id === dragId); const to = items.findIndex((item) => item.id === targetId); const [moved] = items.splice(from, 1); items.splice(to, 0, moved); return { ...current, items } });
   }
   function exportWord() {
-    const rows = plan.items.map((item) => `<tr><td>${item.date}</td><td>${item.startTime}–${item.endTime}</td><td>${item.title}<br>${item.location}</td><td>${item.transport}<br>${item.details}</td><td>${item.note}</td></tr>`).join("");
-    const html = `<html><meta charset="utf-8"><body><h1>${plan.title}</h1><p>${plan.destination} · ${plan.dateRange} · ${plan.companions}</p><table border="1" cellspacing="0" cellpadding="8"><tr><th>日期</th><th>时间</th><th>行程</th><th>交通</th><th>备注</th></tr>${rows}</table></body></html>`;
+    const rows = plan.items.map((item) => `<tr><td>${escapeHtml(item.date)}</td><td>${escapeHtml(item.startTime)}–${escapeHtml(item.endTime)}</td><td>${escapeHtml(item.title)}<br>${escapeHtml(item.location)}</td><td>${escapeHtml(item.transport)}<br>${escapeHtml(item.details)}</td><td>${escapeHtml(item.note)}</td></tr>`).join("");
+    const html = `<html><meta charset="utf-8"><body><h1>${escapeHtml(plan.title)}</h1><p>${escapeHtml(plan.destination)} · ${escapeHtml(plan.dateRange)} · ${escapeHtml(plan.companions)}</p><table border="1" cellspacing="0" cellpadding="8"><tr><th>日期</th><th>时间</th><th>行程</th><th>交通</th><th>备注</th></tr>${rows}</table></body></html>`;
     const blob = new Blob(["\ufeff", html], { type: "application/msword" }); const url = URL.createObjectURL(blob); const link = document.createElement("a"); link.href = url; link.download = `${plan.title || "旅行规划"}.doc`; link.click(); URL.revokeObjectURL(url);
   }
 
