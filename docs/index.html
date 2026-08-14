@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#f5f8ff">
   <title>旅迹 · Travel Planner</title>
-  <link rel="stylesheet" href="./styles.css?v=20260813-15">
+  <link rel="stylesheet" href="./styles.css?v=20260814-weather1">
 </head>
 <body>
   <header class="topbar">
@@ -25,14 +25,22 @@
       <p class="eyebrow">MY JOURNEY</p>
       <div class="editable-title"><input id="planTitle" class="title-input" aria-label="旅行标题" placeholder="输入旅行标题"></div>
       <div class="trip-meta">
-        <label><span>目的地</span><input id="destination" placeholder="点击填写"></label><b></b>
+        <label><span>目的地</span><button type="button" id="destination" class="meta-picker" aria-label="选择旅行目的地">选择地点</button></label><b></b>
         <label><span>日期</span><input id="dateRange" readonly placeholder="添加行程后自动生成" title="根据行程安排自动生成"></label><b></b>
         <label><span>同行</span><input id="companions" placeholder="点击填写"></label>
       </div>
     </section>
 
+    <section class="weather-shell" aria-label="旅行天气">
+      <button type="button" id="weatherCard" class="weather-card">
+        <span class="weather-card-icon" id="weatherCardIcon">☁︎</span>
+        <span class="weather-card-main"><small>目的地天气</small><strong id="weatherCardTitle">正在获取天气…</strong><span id="weatherCardSummary">根据行程日期自动更新</span></span>
+        <span class="weather-card-days" id="weatherCardDays"></span><span class="weather-card-arrow">›</span>
+      </button>
+    </section>
+
     <section class="planner">
-      <div class="edit-reminder" id="editReminder">标题、目的地和同行可直接修改；日期会根据行程安排的首尾日期自动生成。</div>
+      <div class="edit-reminder" id="editReminder">标题和同行可直接修改；点击目的地可搜索并选择多个城市，日期会根据行程安排自动生成。</div>
       <div class="section-heading"><div><p class="eyebrow">ITINERARY</p><h2>行程安排</h2></div><p>拖动卡片调整顺序 · 修改后点击保存</p></div>
       <div id="timeline"></div>
       <button class="add-row" id="addRowBtn">＋ 添加下一段行程</button>
@@ -73,6 +81,23 @@
     <div class="calendar-actions"><button type="button" class="button ghost" id="refreshCalendarBtn">更新订阅源</button><a class="button primary" id="openCalendarLink" href="#">在 Apple 日历中打开</a></div>
   </dialog>
 
+  <dialog id="destinationDialog" class="destination-dialog">
+    <div class="modal-heading"><div><p class="eyebrow">DESTINATIONS</p><h2>旅行目的地</h2></div><button type="button" class="close" data-close="destinationDialog">×</button></div>
+    <p class="dialog-intro">可添加多个城市，天气会按当前行程的首尾日期分别展示。</p>
+    <div id="selectedLocations" class="selected-locations"></div>
+    <div class="location-search-wrap">
+      <label class="token-label"><span>搜索城市或地区</span><input id="locationSearch" autocomplete="off" placeholder="例如：南京、苏州、东京"></label>
+      <div id="locationResults" class="location-results"></div>
+    </div>
+    <div class="destination-actions"><button type="button" class="button ghost" data-close="destinationDialog">完成</button></div>
+  </dialog>
+
+  <dialog id="weatherDialog" class="weather-dialog">
+    <div class="modal-heading"><div><p class="eyebrow">TRIP WEATHER</p><h2>目的地天气</h2></div><button type="button" class="close" data-close="weatherDialog">×</button></div>
+    <p id="weatherDetailRange" class="dialog-intro"></p><div id="weatherDetails" class="weather-details"></div>
+    <p class="weather-source">天气数据由 Open-Meteo 提供；远期行程将在进入可预报范围后自动显示。</p>
+  </dialog>
+
   <dialog id="plansDialog" class="plans-dialog">
     <div class="modal-heading"><div><p class="eyebrow">MY TRIPS</p><h2>我的旅行计划</h2></div><button type="button" class="close" data-close="plansDialog">×</button></div>
     <div class="plans-toolbar"><p>切换当前计划，或查看过去的旅行。</p><div><button type="button" class="button ghost" id="plansSettingsBtn">同步设置</button><button type="button" class="button primary" id="newPlanBtn">＋ 新建旅行</button></div></div>
@@ -98,6 +123,6 @@
   </dialog>
 
   <div id="toast" role="status"></div>
-  <script src="./app.js?v=20260813-15"></script>
+  <script src="./app.js?v=20260814-weather1"></script>
 </body>
 </html>

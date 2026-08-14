@@ -62,7 +62,9 @@ let dirty = false;
 let saving = false;
 
 const $ = (id) => document.getElementById(id);
-const fields = ["planTitle","destination","dateRange","companions"];
+const fields = ["planTitle","dateRange","companions"];
+let weatherState={loading:false,locations:[],range:null};
+let locationSearchTimer=null;
 
 function token(){ return localStorage.getItem("travelGithubToken") || "" }
 function canEdit(){ return Boolean(token()) }
@@ -75,13 +77,13 @@ function toast(text){ const node=$("toast"); node.textContent=text; node.classLi
 function markChanged(){ dirty=true; setStatus(token()?"有修改 · 30秒内自动同步":"有修改 · 请设置同步") }
 function applyAccessMode(){
   const editable=canEdit();
-  ["planTitle","destination","companions"].forEach(id=>$(id).readOnly=!editable);
+  ["planTitle","companions"].forEach(id=>$(id).readOnly=!editable);
   ["addBtn","addRowBtn","saveBtn","newPlanBtn"].forEach(id=>$(id).disabled=!editable);
-  $("editReminder").textContent=editable?"标题、目的地和同行可直接修改；日期会根据行程安排的首尾日期自动生成。":"当前为只读模式；连接 GitHub 同步后才可以新增、编辑或调整行程。";
+  $("editReminder").textContent=editable?"标题和同行可直接修改；点击目的地可搜索并选择多个城市，日期会根据行程安排自动生成。":"当前为只读模式；可以查看目的地天气，连接 GitHub 后才可以修改行程。";
   document.body.classList.toggle("readonly-mode",!editable);
 }
 function newPlanId(){ return `trip-${Date.now()}-${Math.random().toString(36).slice(2,7)}` }
-function normalizePlan(value,index=0){ return {id:value.id||`trip-migrated-${index+1}`,createdAt:value.createdAt||new Date().toISOString(),updatedAt:value.updatedAt||new Date().toISOString(),timezone:value.timezone||"Asia/Shanghai",title:value.title||"未命名旅行",destination:value.destination||"",dateRange:value.dateRange||"",companions:value.companions||"",items:(value.items||[]).map(normalizedItem)} }
+function normalizePlan(value,index=0){ return {id:value.id||`trip-migrated-${index+1}`,createdAt:value.createdAt||new Date().toISOString(),updatedAt:value.updatedAt||new Date().toISOString(),timezone:value.timezone||"Asia/Shanghai",title:value.title||"未命名旅行",destination:value.destination||"",locations:Array.isArray(value.locations)?value.locations.filter(x=>x&&Number.isFinite(Number(x.latitude))&&Number.isFinite(Number(x.longitude))).map(x=>({id:x.id||`${x.latitude},${x.longitude}`,name:x.name||"未命名地点",admin1:x.admin1||"",country:x.country||"",latitude:Number(x.latitude),longitude:Number(x.longitude),timezone:x.timezone||"auto"})):[],dateRange:value.dateRange||"",companions:value.companions||"",items:(value.items||[]).map(normalizedItem)} }
 
 function parseItemDate(dateText, now=new Date()){
   const normalized=String(dateText||"").trim();
@@ -159,9 +161,9 @@ async function loadPlan(){
 }
 
 function syncMeta(){
-  plan.dateRange=derivePlanDateRange(plan); $("planTitle").value=plan.title||""; $("destination").value=plan.destination||""; $("dateRange").value=plan.dateRange||""; $("companions").value=plan.companions||"";
+  plan.dateRange=derivePlanDateRange(plan); $("planTitle").value=plan.title||""; $("destination").textContent=plan.locations?.length?plan.locations.map(x=>x.name).join("、"):(plan.destination||"选择地点"); $("dateRange").value=plan.dateRange||""; $("companions").value=plan.companions||"";
 }
-function collectMeta(){ plan.title=$("planTitle").value; plan.destination=$("destination").value; plan.dateRange=derivePlanDateRange(plan); plan.companions=$("companions").value; plan.updatedAt=new Date().toISOString() }
+function collectMeta(){ plan.title=$("planTitle").value; plan.destination=plan.locations?.length?plan.locations.map(x=>x.name).join("、"):plan.destination; plan.dateRange=derivePlanDateRange(plan); plan.companions=$("companions").value; plan.updatedAt=new Date().toISOString() }
 function render(){
   syncMeta(); const groups=[];
   plan.items.forEach(item=>{ let group=groups.find(x=>x.date===item.date); if(!group){group={date:item.date||"待定日期",items:[]};groups.push(group)} group.items.push(item) });
@@ -176,6 +178,56 @@ function render(){
   document.querySelectorAll(".more,.move-button").forEach(button=>button.disabled=!canEdit());
   if(canEdit())document.querySelectorAll(".more").forEach(button=>button.addEventListener("click",()=>openItem(button.dataset.id)));
   if(canEdit())document.querySelectorAll(".move-button").forEach(button=>button.addEventListener("click",()=>moveItem(button.dataset.id,Number(button.dataset.direction))));
+  loadWeather();
+}
+function itineraryDateRange(value=plan){ const dates=value.items.map(item=>toDateInputValue(item.date)).filter(Boolean).sort(); return dates.length?{start:dates[0],end:dates.at(-1)}:null }
+function weatherMeta(code){
+  if(code===0)return {icon:"☀︎",label:"晴"}; if([1,2].includes(code))return {icon:"◑",label:"晴间多云"}; if(code===3)return {icon:"☁︎",label:"阴"}; if([45,48].includes(code))return {icon:"≋",label:"雾"};
+  if([51,53,55,56,57,61,63,65,66,67,80,81,82].includes(code))return {icon:"☂︎",label:"雨"}; if([71,73,75,77,85,86].includes(code))return {icon:"❄︎",label:"雪"}; if([95,96,99].includes(code))return {icon:"ϟ",label:"雷雨"}; return {icon:"☁︎",label:"天气"};
+}
+function displayLocationName(item){ return [item.name,item.admin1&&item.admin1!==item.name?item.admin1:"",item.country].filter(Boolean).join(" · ") }
+async function geocodeLocations(query,count=6){
+  const response=await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=${count}&language=zh&format=json`);
+  if(!response.ok)throw new Error("地点搜索暂时不可用"); return (await response.json()).results||[];
+}
+async function effectiveLocations(){
+  if(plan.locations?.length)return plan.locations; if(!plan.destination)return [];
+  try{const matches=await geocodeLocations(plan.destination.split(/[、,，/]/)[0],1);return matches.map(x=>({id:String(x.id||`${x.latitude},${x.longitude}`),name:x.name,admin1:x.admin1||"",country:x.country||"",latitude:x.latitude,longitude:x.longitude,timezone:x.timezone||"auto"}))}catch{return []}
+}
+async function fetchLocationWeather(location,range){
+  const today=new Date();today.setHours(0,0,0,0);const start=new Date(`${range.start}T00:00:00`),end=new Date(`${range.end}T00:00:00`);const max=new Date(today);max.setDate(max.getDate()+15);
+  if(end<today||start>max)return {location,status:start>max?"future":"past",days:[]};
+  const queryStart=start<today?today.toISOString().slice(0,10):range.start,queryEnd=end>max?max.toISOString().slice(0,10):range.end;
+  const params=new URLSearchParams({latitude:location.latitude,longitude:location.longitude,timezone:location.timezone||"auto",start_date:queryStart,end_date:queryEnd,daily:"weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,wind_speed_10m_max",temperature_unit:"celsius",wind_speed_unit:"kmh"});
+  const response=await fetch(`https://api.open-meteo.com/v1/forecast?${params}`);if(!response.ok)throw new Error("天气读取失败");const data=await response.json();
+  return {location,status:"ok",days:(data.daily?.time||[]).map((date,i)=>({date,code:data.daily.weather_code[i],max:Math.round(data.daily.temperature_2m_max[i]),min:Math.round(data.daily.temperature_2m_min[i]),rain:data.daily.precipitation_probability_max[i],rainfall:data.daily.precipitation_sum[i],wind:Math.round(data.daily.wind_speed_10m_max[i])}))};
+}
+function renderWeather(){
+  const results=weatherState.locations,range=weatherState.range;
+  if(weatherState.loading){$("weatherCardTitle").textContent="正在获取天气…";$("weatherCardSummary").textContent="请稍候";$("weatherCardDays").innerHTML="";return}
+  if(!range){$("weatherCardTitle").textContent="添加行程日期后查看天气";$("weatherCardSummary").textContent="天气会按行程首尾日期自动匹配";$("weatherCardDays").innerHTML="";$("weatherDetails").innerHTML='<p class="weather-unavailable">添加带日期的行程后，这里会显示对应天气。</p>';return}
+  if(!results.length){$("weatherCardTitle").textContent="选择目的地后查看天气";$("weatherCardSummary").textContent=`${range.start} 至 ${range.end}`;$("weatherCardDays").innerHTML="";$("weatherDetails").innerHTML='<p class="weather-unavailable">尚未配置可查询天气的目的地。</p>';return}
+  const first=results.find(x=>x.days.length),firstDay=first?.days[0];$("weatherCardIcon").textContent=firstDay?weatherMeta(firstDay.code).icon:"☁︎";$("weatherCardTitle").textContent=results.map(x=>x.location.name).join("、");$("weatherCardSummary").textContent=firstDay?`${weatherMeta(firstDay.code).label} · ${firstDay.min}°–${firstDay.max}° · 降雨 ${firstDay.rain??0}%`:(results.some(x=>x.status==="future")?"暂未进入 16 天预报范围":"暂无可用预报");
+  $("weatherCardDays").innerHTML=(first?.days||[]).slice(0,4).map(day=>`<span><small>${Number(day.date.slice(5,7))}/${Number(day.date.slice(8))}</small><b>${weatherMeta(day.code).icon}</b><em>${day.max}°</em></span>`).join("");
+  $("weatherDetailRange").textContent=`行程日期：${range.start} 至 ${range.end}`;
+  $("weatherDetails").innerHTML=results.map(result=>`<section class="weather-location"><h3>${escapeHtml(displayLocationName(result.location))}</h3>${result.days.length?`<div class="forecast-list">${result.days.map(day=>`<article><time>${Number(day.date.slice(5,7))}月${Number(day.date.slice(8))}日</time><span class="forecast-icon">${weatherMeta(day.code).icon}</span><strong>${weatherMeta(day.code).label}</strong><span>${day.min}° / ${day.max}°</span><small>降雨 ${day.rain??0}% · 风速 ${day.wind} km/h</small></article>`).join("")}</div>`:`<p class="weather-unavailable">${result.status==="future"?"尚未进入 16 天预报范围，临近出发时将自动显示。":"该日期暂无实时预报。"}</p>`}</section>`).join("");
+}
+async function loadWeather(){
+  const range=itineraryDateRange();weatherState.range=range;if(!range){weatherState.locations=[];renderWeather();return}
+  const locations=await effectiveLocations();const key=JSON.stringify([plan.id,range,locations.map(x=>[x.latitude,x.longitude])]);if($("weatherCard").dataset.key===key&&weatherState.locations.length)return;$("weatherCard").dataset.key=key;weatherState.loading=true;renderWeather();
+  try{weatherState.locations=await Promise.all(locations.map(location=>fetchLocationWeather(location,range)))}catch(error){weatherState.locations=[];$("weatherCardSummary").textContent=error.message}finally{weatherState.loading=false;renderWeather()}
+}
+function renderSelectedLocations(){
+  $("selectedLocations").innerHTML=plan.locations?.length?plan.locations.map((x,i)=>`<span>${escapeHtml(x.name)}${canEdit()?`<button type="button" data-remove-location="${i}" aria-label="移除 ${escapeHtml(x.name)}">×</button>`:""}</span>`).join(""):'<p>尚未选择地点</p>';
+}
+function openDestinationDialog(){renderSelectedLocations();$("locationSearch").value="";$("locationResults").innerHTML=canEdit()?'<p>输入至少两个字开始搜索</p>':'<p>当前为只读模式，连接 GitHub 后可修改目的地。</p>';$("locationSearch").disabled=!canEdit();$("destinationDialog").showModal()}
+async function searchLocationOptions(){
+  const query=$("locationSearch").value.trim();if(query.length<2){$("locationResults").innerHTML='<p>输入至少两个字开始搜索</p>';return}$("locationResults").innerHTML='<p>正在搜索…</p>';
+  try{const results=await geocodeLocations(query);$("locationResults").innerHTML=results.length?results.map((x,i)=>`<button type="button" data-location-result="${i}"><strong>${escapeHtml(x.name)}</strong><small>${escapeHtml([x.admin1,x.country].filter(Boolean).join(" · "))}</small></button>`).join(""):'<p>没有找到匹配地点</p>';$("locationResults")._results=results}catch(error){$("locationResults").innerHTML=`<p>${escapeHtml(error.message)}</p>`}
+}
+function addLocation(result){
+  if(!result)return;const location={id:String(result.id||`${result.latitude},${result.longitude}`),name:result.name,admin1:result.admin1||"",country:result.country||"",latitude:Number(result.latitude),longitude:Number(result.longitude),timezone:result.timezone||"auto"};plan.locations=plan.locations||[];if(plan.locations.some(x=>x.id===location.id)){toast("这个地点已经添加");return}
+  plan.locations.push(location);plan.destination=plan.locations.map(x=>x.name).join("、");syncMeta();renderSelectedLocations();$("locationSearch").value="";$("locationResults").innerHTML='<p>可以继续搜索并添加其他地点</p>';markChanged();loadWeather();
 }
 function planState(value){
   if(!value.items.length)return {key:"draft",label:"规划中"};
@@ -327,6 +379,11 @@ $("plansSettingsBtn").onclick=()=>{$("plansDialog").close();$("tokenInput").valu
 $("newPlanBtn").onclick=()=>{$("newPlanForm").reset();$("newPlanTitle").value="新的旅行";$("newPlanDialog").showModal();setTimeout(()=>$("newPlanTitle").select(),0)};
 $("newPlanForm").onsubmit=createPlan;
 $("calendarBtn").onclick=()=>publishCalendar();
+$("destination").onclick=openDestinationDialog;
+$("weatherCard").onclick=()=>{if(!weatherState.locations.length&&canEdit()){openDestinationDialog();return}renderWeather();$("weatherDialog").showModal()};
+$("locationSearch").addEventListener("input",()=>{clearTimeout(locationSearchTimer);locationSearchTimer=setTimeout(searchLocationOptions,350)});
+$("locationResults").addEventListener("click",event=>{const button=event.target.closest("[data-location-result]");if(button)addLocation($("locationResults")._results?.[Number(button.dataset.locationResult)])});
+$("selectedLocations").addEventListener("click",event=>{const button=event.target.closest("[data-remove-location]");if(!button||!canEdit())return;plan.locations.splice(Number(button.dataset.removeLocation),1);plan.destination=plan.locations.map(x=>x.name).join("、");syncMeta();renderSelectedLocations();markChanged();loadWeather()});
 $("refreshCalendarBtn").onclick=()=>publishCalendar({fromDialog:true});
 $("copyCalendarUrl").onclick=async()=>{const value=$("calendarUrl").value;try{await navigator.clipboard.writeText(value)}catch{$("calendarUrl").select();document.execCommand("copy")}toast("订阅地址已复制")};
 $("syncStatus").onclick=()=>{if(!canEdit()){$("tokenInput").value="";$("settingsDialog").showModal()}else if(dirty)saveToGithub()};
