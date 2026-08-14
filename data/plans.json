@@ -4,7 +4,7 @@
     {
       "id": "trip-migrated-1",
       "createdAt": "2026-08-13T13:05:08.350Z",
-      "updatedAt": "2026-08-14T09:28:07.661Z",
+      "updatedAt": "2026-08-14T09:33:00.107Z",
       "timezone": "Asia/Shanghai",
       "title": "南京两日",
       "destination": "南京",
@@ -19,7 +19,7 @@
           "timezone": "Asia/Shanghai"
         }
       ],
-      "dateRange": "2026.8.13–8.16",
+      "dateRange": "2026.8.15–8.16",
       "companions": "3",
       "items": [
         {
@@ -369,20 +369,6 @@
           "title": "前往车站",
           "location": "南京南站诺富特酒店——南京南站",
           "transport": "打车",
-          "details": "",
-          "note": ""
-        },
-        {
-          "id": "item-1786699344770",
-          "date": "2026年8月13日 · 周四",
-          "startTime": "18:21",
-          "endTime": "19:21",
-          "linkedPrevious": false,
-          "timeMode": "duration",
-          "durationMinutes": 60,
-          "title": "出发",
-          "location": "",
-          "transport": "步行",
           "details": "",
           "note": ""
         },
