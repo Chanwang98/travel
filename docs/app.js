@@ -79,7 +79,6 @@ function applyAccessMode(){
   const editable=canEdit();
   ["planTitle","companions"].forEach(id=>$(id).readOnly=!editable);
   ["addBtn","addRowBtn","saveBtn","newPlanBtn"].forEach(id=>$(id).disabled=!editable);
-  $("editReminder").textContent=editable?"标题和同行可直接修改；点击目的地可搜索并选择多个城市，日期会根据行程安排自动生成。":"当前为只读模式；可以查看目的地天气，连接 GitHub 后才可以修改行程。";
   document.body.classList.toggle("readonly-mode",!editable);
 }
 function newPlanId(){ return `trip-${Date.now()}-${Math.random().toString(36).slice(2,7)}` }
