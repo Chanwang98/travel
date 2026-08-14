@@ -4,7 +4,7 @@
     {
       "id": "trip-migrated-1",
       "createdAt": "2026-08-13T13:05:08.350Z",
-      "updatedAt": "2026-08-14T14:34:01.542Z",
+      "updatedAt": "2026-08-14T14:34:31.514Z",
       "timezone": "Asia/Shanghai",
       "title": "南京两日",
       "destination": "南京",
@@ -144,7 +144,7 @@
           "durationMinutes": 30,
           "title": "城市漫步",
           "location": "老门东——徐家鸭子店(夫子庙店)",
-          "transport": "步行",
+          "transport": "城市漫步",
           "details": "",
           "note": ""
         },
@@ -158,7 +158,7 @@
           "durationMinutes": 10,
           "title": "城市漫步",
           "location": "徐家鸭子店(夫子庙店)——金陵家宴·金陵春.南京菜(夫子庙店)",
-          "transport": "步行",
+          "transport": "城市漫步",
           "details": "",
           "note": ""
         },
@@ -186,7 +186,7 @@
           "durationMinutes": 120,
           "title": "景点游览",
           "location": "夫子庙+秦淮河",
-          "transport": "步行",
+          "transport": "景点",
           "details": "",
           "note": ""
         },
