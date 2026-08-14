@@ -4,7 +4,7 @@
     {
       "id": "trip-migrated-1",
       "createdAt": "2026-08-13T13:05:08.350Z",
-      "updatedAt": "2026-08-14T09:23:27.227Z",
+      "updatedAt": "2026-08-14T09:28:07.661Z",
       "timezone": "Asia/Shanghai",
       "title": "南京两日",
       "destination": "南京",
@@ -373,20 +373,6 @@
           "note": ""
         },
         {
-          "id": "item-1786624201953",
-          "date": "2026年8月16日 · 周日",
-          "startTime": "16:53",
-          "endTime": "18:21",
-          "linkedPrevious": false,
-          "timeMode": "fixedEnd",
-          "durationMinutes": 88,
-          "title": "返程",
-          "location": "南京南站——上海虹桥站",
-          "transport": "高铁",
-          "details": "G745",
-          "note": "【B4检票口】"
-        },
-        {
           "id": "item-1786699344770",
           "date": "2026年8月13日 · 周四",
           "startTime": "18:21",
@@ -399,6 +385,20 @@
           "transport": "步行",
           "details": "",
           "note": ""
+        },
+        {
+          "id": "item-1786624201953",
+          "date": "2026年8月16日 · 周日",
+          "startTime": "16:53",
+          "endTime": "18:21",
+          "linkedPrevious": false,
+          "timeMode": "fixedEnd",
+          "durationMinutes": 88,
+          "title": "返程",
+          "location": "南京南站——上海虹桥站",
+          "transport": "高铁",
+          "details": "G745",
+          "note": "【B4检票口】"
         }
       ]
     }
