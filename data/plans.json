@@ -2,9 +2,21 @@
   "version": 1,
   "plans": [
     {
+      "id": "trip-1792475170447-dg6o8",
+      "createdAt": "2026-10-20T05:46:10.447Z",
+      "updatedAt": "2026-10-20T05:46:13.028Z",
+      "timezone": "Asia/Shanghai",
+      "title": "新年过福州",
+      "destination": "福州",
+      "locations": [],
+      "dateRange": "",
+      "companions": "2",
+      "items": []
+    },
+    {
       "id": "trip-migrated-1",
       "createdAt": "2026-08-13T13:05:08.350Z",
-      "updatedAt": "2026-08-14T14:36:39.720Z",
+      "updatedAt": "2026-10-20T05:46:10.447Z",
       "timezone": "Asia/Shanghai",
       "title": "南京两日",
       "destination": "南京",
